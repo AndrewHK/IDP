@@ -10,10 +10,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using HtmlAgilityPack;
 using IDPParser.Model;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
@@ -142,7 +144,6 @@ namespace IDPParser.Control
 
             _mainWb.DocumentCompleted += (s, e) =>
             {
-                Debug.Print("One Page is trying to load");
                 if (_mainWb.ReadyState != WebBrowserReadyState.Complete)
                     return;
                 if (isRumorPageCompleted.Task.IsCompleted)
@@ -191,25 +192,28 @@ namespace IDPParser.Control
 
             _playerWb.DocumentCompleted += (s, e) =>
             {
-                Debug.Print("Player Page is trying to load");
                 if (_playerWb.ReadyState != WebBrowserReadyState.Complete)
                     return;
                 if (isPlayerPageCompleted.Task.IsCompleted)
                     return;
                 Debug.Print("Player Page is loaded");
                 isPlayerPageCompleted.SetResult(true);
+
             };
 
            while(true)
            { 
                 isPlayerPageCompleted = new TaskCompletionSource<bool>();
                 //navgiate to player url and wait for notification to parsePlayer
-                _playerWb.Navigate(DomainUrl+ player.Url);
+               var playerUrl = DomainUrl + player.Url;
+               _playerWb.Navigate(playerUrl);
             
                 var completionTask = isPlayerPageCompleted.Task;
                 if (await Task.WhenAny(completionTask, Task.Delay(timeout)) == completionTask)
                 {
                     ParsePlayer();
+                    Debug.Print("Player is parsed, ID: {0}  URL: {1}", _rumorList[GetRumorIndex()].Player.Id, _playerWb.Url.AbsolutePath);
+
                     break;
                 }
                 //Navigate again to the page
@@ -249,8 +253,11 @@ namespace IDPParser.Control
 
                 var tempNodes =
                     sourceDiv.SelectNodes("preceding::div[" + generateClassSelectorString("forum-datum") + "]");
+                
                 var dateNode = tempNodes[tempNodes.Count - 1];
-                var date = dateNode.InnerText.Trim();
+                var dateWithUhr = dateNode.InnerText.Trim();
+
+                var date = dateWithUhr.Substring(0, dateWithUhr.Length-3).Trim();
 
                 tempNodes = sourceDiv.SelectNodes("preceding::div[" + generateClassSelectorString("fs17") + "]");
                 var headlineNode = tempNodes[0];
@@ -309,16 +316,15 @@ namespace IDPParser.Control
 
             if (htmlDoc.DocumentNode == null) return;
 
-            //html/body/div[2]/div[10]/div[1]/div[2]/div[3]/table/tbody/tr[1]/td[2]/a
-            
+            //div[contains(concat(' ',normalize-space(@class),' '),' eight columns ')]/div/div[contains(concat(' ',normalize-space(@class),' '),' responsive-table ')]/table/tbody/tr
+            var xpath = "//div[" +generateClassSelectorString("eight columns") +"]/div/div[" +generateClassSelectorString("responsive-table")+ "]/table/tbody/tr";
+
             foreach (
                 var transferNodeRow in
-                    htmlDoc.DocumentNode.SelectNodes("//div[" +
-                                                     generateClassSelectorString("eight columns") +
-                                                     "]/div[2]/div[3]/table/tbody/tr"))
+                    htmlDoc.DocumentNode.SelectNodes(xpath))
             {
                 var leihe = transferNodeRow.ChildNodes[19].InnerText;
-                if (leihe == null || leihe.Trim().Length == 0)
+                if (leihe.Trim().Length != 0)
                     continue;
 
                 var date = transferNodeRow.ChildNodes[3].LastChild.InnerText;
@@ -340,13 +346,30 @@ namespace IDPParser.Control
 
         public void UpdateRumorsSources()
         {
-            for (var i = 0; i < _rumorSourcesList.Count ; i++)
+            foreach (var rumorSource in _rumorSourcesList)
             {
-                var ri = GetRumorIndex(_rumorSourcesList[i].RumorId);
+                var ri = GetRumorIndex(rumorSource.RumorId);
                 var player = _rumorList[ri].Player;
 
-                _rumorSourcesList[i].Player = player;
-                _rumorSourcesList[i].DetermineCurrentClub();
+                rumorSource.SetPlayer(player);
+                rumorSource.DetermineCurrentClub();
+            }
+            foreach (var rumor in _rumorList)
+            {
+                var rumorSources = rumor.GetSources();
+                var rumorCurrentClubId = rumor.CurrentClub.Id;
+                var detectedCurrentClubsIdList = new List<string>();
+                
+                var postfix = (char)65;
+                foreach (var rumorSource in rumorSources.Where(rumorSource => !rumorCurrentClubId.Equals(rumorSource.GetCurrentClubId())))
+                {
+                    if (detectedCurrentClubsIdList.IndexOf(rumorSource.GetCurrentClubId()) < 0)
+                    {
+                        detectedCurrentClubsIdList.Add(rumorSource.GetCurrentClubId());
+                        postfix++;
+                    }
+                    rumorSource.RumorId += postfix;
+                }
             }
         }
     }

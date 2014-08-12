@@ -34,7 +34,7 @@ namespace IDPParser.View
 
         private void CrawlBtnClick(object sender, EventArgs e)
         {
-            string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
+            //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
             //_tmParser.ParsePlayer(pu);
             
 
@@ -43,12 +43,12 @@ namespace IDPParser.View
             task.ContinueWith(t =>
             {
                 MessageBox.Show("Navigation done!");
-                _tmParser.
+                _tmParser.UpdateRumorsSources();
                 //CreateExcelFile.CreateRumorsExcelDocument(tmParser.getRumorsList(), "C:\\Sample_Rumors.xlsx");
                 //CreateExcelFile.CreateExcelDocument(tmParser.getRumorsSourcesList(), "C:\\Sample_RumorsSources.xlsx");
 
                 CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                    _tmParser.GetRumorsSourcesList(), "C:\\Sample_Complete.xlsx");
+                    _tmParser.GetRumorsSourcesList(), "D:\\Sample_Complete.xlsx");
             }, TaskScheduler.FromCurrentSynchronizationContext());
         
               }

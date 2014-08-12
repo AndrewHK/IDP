@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace IDPParser.Model
 {
@@ -32,7 +33,7 @@ namespace IDPParser.Model
             Nationality = nationality;
             StrongerFoot = strongerFoot;
 
-            TransferDictionary = new SortedDictionary<DateTime, TMClub>();
+            _transferDictionary = new SortedDictionary<DateTime, TMClub>();
         }
 
         public string Id { get; set; }
@@ -43,20 +44,20 @@ namespace IDPParser.Model
         public string Position { get; set; }
         public string Nationality { get; set; }
         public string StrongerFoot { get; set; }
-        public IDictionary<DateTime, TMClub> TransferDictionary { get; set; }
 
-        public override string ToString()
+        private readonly IDictionary<DateTime, TMClub> _transferDictionary;
+
+        private const string DateFormat = "dd.MM.yyyy";
+
+        public IDictionary<DateTime, TMClub> GetTransferDictionary()
         {
-            return
-                string.Format(
-                    "[TMPlayer ID={0}, URL={1}, Name={2}, DateOfBirth={3}, Height={4}, Position={5}, Nationality={6}, StrongerFoot={7}]",
-                    Id, Url, Name, DateOfBirth, Height, Position, Nationality, StrongerFoot);
+            return _transferDictionary;
         }
 
         public void AddTransfer(String dateStr, TMClub club)
         {
-            var date = Convert.ToDateTime(dateStr);
-            TransferDictionary.Add(date,club);
+            var date = DateTime.ParseExact(dateStr, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+            _transferDictionary.Add(date,club);
         }
     }
 }

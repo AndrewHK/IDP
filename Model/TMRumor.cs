@@ -15,7 +15,7 @@ namespace IDPParser.Model
     /// </summary>
     public class TMRumor
     {
-        private readonly List<TMRumorSource> _sourcesList;
+        private readonly IList<TMRumorSource> _sourcesList;
 
         public TMRumor(string id, string url, int noOfPages)
         {
@@ -31,29 +31,27 @@ namespace IDPParser.Model
 
         public string Id { get; set; }
         public string Url { get; set; }
-        public int NoOfPages { get; set; }
-
+        
         public TMPlayer Player { get; set; }
         public TMClub CurrentClub { get; set; }
         public TMClub InterestedClub { get; set; }
         public TMRumorType Type { get; set; }
+        
+        public int NoOfPages { get; set; }
         public int NoOfSources { get; set; }
-
         public bool IsParsed { get; set; }
         public bool FixedSourceExists { get; set; }
+
+
+        public IList<TMRumorSource> GetSources()
+        {
+            return _sourcesList;
+        }
 
         public void AddSource(TMRumorSource source)
         {
             _sourcesList.Add(source);
             NoOfSources++;
-        }
-
-        public override string ToString()
-        {
-            return
-                string.Format(
-                    "[TMRumor ID={0}, URL={1}, NoOfPages={2}, Player={3}, CurrentClub={4}, InterestedClub={5}, Type={6}, SourcesList Count={7}]",
-                    Id, Url, NoOfPages, Player, CurrentClub, InterestedClub, Type, _sourcesList.Count);
         }
     }
 }

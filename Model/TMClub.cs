@@ -27,11 +27,5 @@ namespace IDPParser.Model
         public string Id { get; set; }
         public string Url { get; set; }
         public string Name { get; set; }
-
-
-        public override string ToString()
-        {
-            return string.Format("[TMClub ID={0}, URL={1}, Name={2}]", Id, Url, Name);
-        }
     }
 }

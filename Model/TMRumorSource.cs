@@ -7,6 +7,7 @@
 */
 
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace IDPParser.Model
@@ -25,33 +26,60 @@ namespace IDPParser.Model
             Name = name;
             Url = url;
             Text = text;
-
-            //DetermineCurrentClub();
         }
 
         public string RumorId { get; set; }
-        public string Headline { get; set; }
+        public string Player
+        {
+            get { return string.Format(" ID={0}, Name={1}", _player.Id, _player.Name); }
+        }
+        public string CurrentClub
+        {
+            get {return string.Format(" ID={0}, Name={1}", _currentClub.Id, _currentClub.Name);}
+        }
         public string Date { get; set; }
+        public string Headline { get; set; }
         public string Name { get; set; }
         public string Url { get; set; }
         public string Text { get; set; }
+        
 
-        public TMPlayer Player { get; set; }
-        public TMClub CurrentClub { get; set; }
+        private TMClub _currentClub;
+        private TMPlayer _player;
+        private const string DateFormat = "dd.MM.yyyy - HH:mm";
 
-
-
-        public override string ToString()
+        public void SetPlayer(TMPlayer player)
         {
-            return string.Format("[TMRumorSource RumorID={0}, Headline={1}, Date={2}, Name={3}, URL={4}, Text={5}]",
-                RumorId, Headline, Date, Name, Url, Text);
+            _player = player;
+        }
+
+        public string GetCurrentClubId()
+        {
+            return _currentClub.Id;
         }
 
         public void DetermineCurrentClub()
         {
             //var keysCollection = Player.TransferDictionary.Keys;
-            //var sourceDate = Convert.ToDateTime(Date);
-            //TODO figure out a way to find where the rumor source date is situated
+            
+            var sourceDate = DateTime.ParseExact(Date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+            var playerTransfers = _player.GetTransferDictionary();
+            /* Loop on the SORTED dictionary till it finds a date that is after the given rumor source date,
+             * Get the club related to the date BEFORE the one it found
+             * If nothing before, current club is null
+             * If nothing after, current club is last club
+             */
+            var prevKey = DateTime.MinValue;
+            foreach (var kvp in playerTransfers)
+            {
+                if (kvp.Key.CompareTo(sourceDate) > 0)
+                {
+                    _currentClub = playerTransfers[prevKey];
+                    return;
+                }
+                prevKey = kvp.Key;
+            }
+            _currentClub = playerTransfers[prevKey];
         }
     }
 }
