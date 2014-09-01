@@ -26,7 +26,7 @@ namespace IDPParser.View
             // The InitializeComponent() call is required for Windows Forms designer support.
             //
             InitializeComponent();
-            _tmParser = new TMHTMLParser();
+            _tmParser = new TMHTMLParser(logTB);
             //
             // TODO: Add constructor code after the InitializeComponent() call.
             //
@@ -48,7 +48,7 @@ namespace IDPParser.View
                 //CreateExcelFile.CreateExcelDocument(tmParser.getRumorsSourcesList(), "C:\\Sample_RumorsSources.xlsx");
 
                 CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                    _tmParser.GetRumorsSourcesList(), "D:\\Sample_Complete.xlsx");
+                    _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
             }, TaskScheduler.FromCurrentSynchronizationContext());
         
               }

@@ -50,7 +50,7 @@ namespace IDPParser.Control
             try
             {
                 using (
-                    SpreadsheetDocument document = SpreadsheetDocument.Create(excelFilename,
+                    var document = SpreadsheetDocument.Create(excelFilename,
                         SpreadsheetDocumentType.Workbook))
                 {
                     WriteExcelFile(ds, document);
@@ -85,8 +85,8 @@ namespace IDPParser.Control
             foreach (DataTable dt in ds.Tables)
             {
                 //  For each worksheet you want to create
-                string workSheetId = "rId" + worksheetNumber;
-                string worksheetName = dt.TableName;
+                var workSheetId = "rId" + worksheetNumber;
+                var worksheetName = dt.TableName;
 
                 var newWorksheetPart = spreadsheet.WorkbookPart.AddNewPart<WorksheetPart>();
                 newWorksheetPart.Worksheet = new Worksheet();
@@ -117,18 +117,18 @@ namespace IDPParser.Control
 
         private static void WriteDataTableToExcelWorksheet(DataTable dt, WorksheetPart worksheetPart)
         {
-            Worksheet worksheet = worksheetPart.Worksheet;
+            var worksheet = worksheetPart.Worksheet;
             var sheetData = worksheet.GetFirstChild<SheetData>();
 
             //  Create a Header Row in our Excel file, containing one header for each Column of data in our DataTable.
             //
             //  We'll also create an array, showing which type each column of data is (Text or Numeric), so when we come to write the actual
             //  cells of data, we'll know if to write Text values or Numeric cell values.
-            int numberOfColumns = dt.Columns.Count;
+            var numberOfColumns = dt.Columns.Count;
             var isNumericColumn = new bool[numberOfColumns];
 
             var excelColumnNames = new string[numberOfColumns];
-            for (int n = 0; n < numberOfColumns; n++)
+            for (var n = 0; n < numberOfColumns; n++)
                 excelColumnNames[n] = GetExcelColumnName(n);
 
             //
@@ -139,9 +139,9 @@ namespace IDPParser.Control
             var headerRow = new Row {RowIndex = rowIndex}; // add a row at the top of spreadsheet
             sheetData.Append(headerRow);
 
-            for (int colInx = 0; colInx < numberOfColumns; colInx++)
+            for (var colInx = 0; colInx < numberOfColumns; colInx++)
             {
-                DataColumn col = dt.Columns[colInx];
+                var col = dt.Columns[colInx];
                 AppendTextCell(excelColumnNames[colInx] + "1", col.ColumnName, headerRow);
                 isNumericColumn[colInx] = (col.DataType.FullName == "System.Decimal") ||
                                           (col.DataType.FullName == "System.Int32");
@@ -157,9 +157,9 @@ namespace IDPParser.Control
                 var newExcelRow = new Row {RowIndex = rowIndex}; // add a row at the top of spreadsheet
                 sheetData.Append(newExcelRow);
 
-                for (int colInx = 0; colInx < numberOfColumns; colInx++)
+                for (var colInx = 0; colInx < numberOfColumns; colInx++)
                 {
-                    string cellValue = dr.ItemArray[colInx].ToString();
+                    var cellValue = dr.ItemArray[colInx].ToString();
 
                     // Create cell with data
                     if (isNumericColumn[colInx])
@@ -230,11 +230,11 @@ namespace IDPParser.Control
         {
             var dt = new DataTable();
 
-            foreach (PropertyInfo info in typeof (TMRumor).GetProperties())
+            foreach (var info in typeof (TMRumor).GetProperties())
             {
                 if (info.PropertyType == typeof (TMClub) || info.PropertyType == typeof (TMPlayer))
                 {
-                    foreach (PropertyInfo innerInfo in info.PropertyType.GetProperties())
+                    foreach (var innerInfo in info.PropertyType.GetProperties())
                     {
                         dt.Columns.Add(new DataColumn(info.Name + "_" + innerInfo.Name,
                             GetNullableType(innerInfo.PropertyType)));
@@ -245,14 +245,14 @@ namespace IDPParser.Control
                     dt.Columns.Add(new DataColumn(info.Name, GetNullableType(info.PropertyType)));
                 }
             }
-            foreach (TMRumor t in list)
+            foreach (var t in list)
             {
-                DataRow row = dt.NewRow();
-                foreach (PropertyInfo info in typeof (TMRumor).GetProperties())
+                var row = dt.NewRow();
+                foreach (var info in typeof (TMRumor).GetProperties())
                 {
                     if (info.PropertyType == typeof (TMPlayer))
                     {
-                        foreach (PropertyInfo innerInfo in typeof (TMPlayer).GetProperties())
+                        foreach (var innerInfo in typeof (TMPlayer).GetProperties())
                         {
                             if (!IsNullableType(innerInfo.PropertyType))
                                 row[info.Name + "_" + innerInfo.Name] = innerInfo.GetValue(t.Player, null);
@@ -263,7 +263,7 @@ namespace IDPParser.Control
                     }
                     else if (info.PropertyType == typeof (TMClub) && info.Name.Equals("CurrentClub"))
                     {
-                        foreach (PropertyInfo innerInfo in typeof (TMClub).GetProperties())
+                        foreach (var innerInfo in typeof (TMClub).GetProperties())
                         {
                             if (!IsNullableType(innerInfo.PropertyType))
                                 row[info.Name + "_" + innerInfo.Name] = innerInfo.GetValue(t.CurrentClub, null);
@@ -274,7 +274,7 @@ namespace IDPParser.Control
                     }
                     else if (info.PropertyType == typeof (TMClub) && info.Name.Equals("InterestedClub"))
                     {
-                        foreach (PropertyInfo innerInfo in typeof (TMClub).GetProperties())
+                        foreach (var innerInfo in typeof (TMClub).GetProperties())
                         {
                             if (!IsNullableType(innerInfo.PropertyType))
                                 row[info.Name + "_" + innerInfo.Name] = innerInfo.GetValue(t.InterestedClub, null);
@@ -300,14 +300,14 @@ namespace IDPParser.Control
         {
             var dt = new DataTable();
 
-            foreach (PropertyInfo info in typeof (T).GetProperties())
+            foreach (var info in typeof (T).GetProperties())
             {
                 dt.Columns.Add(new DataColumn(info.Name, GetNullableType(info.PropertyType)));
             }
-            foreach (T t in list)
+            foreach (var t in list)
             {
-                DataRow row = dt.NewRow();
-                foreach (PropertyInfo info in typeof (T).GetProperties())
+                var row = dt.NewRow();
+                foreach (var info in typeof (T).GetProperties())
                 {
                     if (!IsNullableType(info.PropertyType))
                         row[info.Name] = info.GetValue(t, null);
@@ -321,7 +321,7 @@ namespace IDPParser.Control
 
         private static Type GetNullableType(Type t)
         {
-            Type returnType = t;
+            var returnType = t;
             if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof (Nullable<>))
             {
                 returnType = Nullable.GetUnderlyingType(t);
@@ -341,7 +341,7 @@ namespace IDPParser.Control
         {
             var ds = new DataSet();
             ds.Tables.Add(dt);
-            bool result = CreateExcelDocument(ds, xlsxFilePath);
+            var result = CreateExcelDocument(ds, xlsxFilePath);
             ds.Tables.Remove(dt);
             return result;
         }

@@ -22,28 +22,46 @@ namespace IDPParser.Model
         {
             RumorId = rumorId;
             Headline = headline;
-            Date = date;
+            _date = DateTime.ParseExact(date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+;
             Name = name;
             Url = url;
             Text = text;
         }
 
         public string RumorId { get; set; }
-        public string Player
+        public string SplitRumor { set; get; }
+        public string PlayerId
         {
-            get { return string.Format(" ID={0}, Name={1}", _player.Id, _player.Name); }
+            get { return _player.Id; }
         }
-        public string CurrentClub
+        public string PlayerName
         {
-            get {return string.Format(" ID={0}, Name={1}", _currentClub.Id, _currentClub.Name);}
+            get { return _player.Name; }
         }
-        public string Date { get; set; }
+        public string CurrentClubId
+        {
+            get { return _currentClub != null ? _currentClub.Id : string.Empty; }
+        }
+        public string CurrentClubName
+        {
+            get { return _currentClub != null ? _currentClub.Name : string.Empty; }
+        }
+
+        public string Date
+        {
+            get
+            {
+                return _date.ToShortDateString();
+            }
+        }
         public string Headline { get; set; }
         public string Name { get; set; }
         public string Url { get; set; }
         public string Text { get; set; }
-        
 
+
+        private DateTime _date;
         private TMClub _currentClub;
         private TMPlayer _player;
         private const string DateFormat = "dd.MM.yyyy - HH:mm";
@@ -53,26 +71,22 @@ namespace IDPParser.Model
             _player = player;
         }
 
-        public string GetCurrentClubId()
-        {
-            return _currentClub.Id;
-        }
-
         public void DetermineCurrentClub()
         {
             //var keysCollection = Player.TransferDictionary.Keys;
             
-            var sourceDate = DateTime.ParseExact(Date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
             var playerTransfers = _player.GetTransferDictionary();
             /* Loop on the SORTED dictionary till it finds a date that is after the given rumor source date,
+             * if no transfers (like in /emmanual-sunday/profil/spieler/156476) return
              * Get the club related to the date BEFORE the one it found
              * If nothing before, current club is null
              * If nothing after, current club is last club
-             */
+            */
+            if (playerTransfers.Count <= 0) return;
             var prevKey = DateTime.MinValue;
             foreach (var kvp in playerTransfers)
             {
-                if (kvp.Key.CompareTo(sourceDate) > 0)
+                if (kvp.Key.CompareTo(_date) > 0)
                 {
                     _currentClub = playerTransfers[prevKey];
                     return;
