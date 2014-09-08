@@ -1,5 +1,4 @@
 ﻿/*
- * Created by SharpDevelop.
  * User: Andrew
  * Date: 23-Jun-14
  * Time: 3:15 PM
@@ -16,6 +15,18 @@ namespace IDPParser.Model
     public class TMRumor
     {
         private readonly IList<TMRumorSource> _sourcesList;
+
+        public TMRumor(TMRumor copyRumor)
+        {
+            Id = copyRumor.Id;
+            Url = copyRumor.Url;
+            NoOfPages = copyRumor.NoOfPages;
+            Player = copyRumor.Player;
+            CurrentClub = copyRumor.CurrentClub;
+            InterestedClub = copyRumor.InterestedClub;
+            Type = copyRumor.Type;
+            _sourcesList = new List<TMRumorSource>();
+        }
 
         public TMRumor(string id, string url, int noOfPages)
         {

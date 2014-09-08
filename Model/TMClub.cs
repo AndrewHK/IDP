@@ -17,15 +17,15 @@ namespace IDPParser.Model
         {
         }
 
-        public TMClub(string id, string url, string name)
+        public TMClub(string id, /*string url,*/ string name)
         {
             Id = id;
-            Url = url;
+            //Url = url;
             Name = name;
         }
 
         public string Id { get; set; }
-        public string Url { get; set; }
+        //public string Url { get; set; }
         public string Name { get; set; }
     }
 }

@@ -167,7 +167,7 @@ namespace IDPParser.Control
                 for (i = 1; i <= rumor.NoOfPages; i++)
                 {
                     isRumorPageCompleted = new TaskCompletionSource<bool>();
-                    AppendLog(string.Format(string.Format("One Page is pending navigation, ID: {0}", rumor.Id)));
+                    AppendLog(string.Format("One Page is pending navigation, ID: {0}", rumor.Id));
                     var rumorUrLpaged = rumor.Url + "/page/" + i;
                     //navgiate to rumorURLpaged and wait for notification to parseRumor
                     _mainWb.Navigate(rumorUrLpaged);
@@ -308,7 +308,7 @@ namespace IDPParser.Control
                     playerDetailsNode.ChildNodes[15].LastChild.PreviousSibling.SelectSingleNode("a").Attributes["href"]
                         .Value;
                 var currentClubId = currentClubUrl.Substring(currentClubUrl.LastIndexOf('/') + 1);
-                _rumorList[ri].CurrentClub = new TMClub(currentClubId, currentClubUrl, currentClubName);
+                _rumorList[ri].CurrentClub = new TMClub(currentClubId, currentClubName);
                 _rumorList[ri].IsParsed = true;
 
                 // Check if there is a fixed source
@@ -356,7 +356,7 @@ namespace IDPParser.Control
                     var end = currentClubUrl.LastIndexOf("/saison", StringComparison.Ordinal);
                     var currentClubId = currentClubUrl.Substring(begin, end - begin);
 
-                    var currentClub = new TMClub(currentClubId, currentClubUrl, currentClubName);
+                    var currentClub = new TMClub(currentClubId, currentClubName);
 
                     _rumorList[ri].Player.AddTransfer(date, currentClub);
                 }
@@ -371,6 +371,7 @@ namespace IDPParser.Control
 
         public void UpdateRumorsSources()
         {
+            var splitRumorList = new List<TMRumor>();
             foreach (var rumorSource in _rumorSourcesList)
             {
                 var ri = GetRumorIndex(rumorSource.RumorId);
@@ -397,10 +398,17 @@ namespace IDPParser.Control
                     {
                         detectedCurrentClubsIdList.Add(rumorSource.CurrentClubId);
                         postfix++;
+
+                        var newSplitRumor = new TMRumor(rumor);
+                        newSplitRumor.CurrentClub.Id = rumorSource.CurrentClubId;
+                        newSplitRumor.CurrentClub.Name = rumorSource.CurrentClubName;
+                        newSplitRumor.Id = rumorSource.RumorId + postfix;
+                        splitRumorList.Add(newSplitRumor);
                     }
                     rumorSource.SplitRumor = rumorSource.RumorId + postfix;
                 }
             }
+            _rumorList.AddRange(splitRumorList);
         }
     }
 }
