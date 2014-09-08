@@ -65,6 +65,7 @@
     <Compile Include="Control\CreateExcelFile.cs" />
     <Compile Include="Control\CustomList.cs" />
     <Compile Include="Control\TMHTMLParser.cs" />
+    <Compile Include="Control\Utils.cs" />
     <Compile Include="Model\TMClub.cs" />
     <Compile Include="Model\TMPlayer.cs" />
     <Compile Include="Model\TMRumor.cs" />

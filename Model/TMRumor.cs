@@ -19,6 +19,7 @@ namespace IDPParser.Model
         public TMRumor(TMRumor copyRumor)
         {
             Id = copyRumor.Id;
+            Title = copyRumor.Title;
             Url = copyRumor.Url;
             NoOfPages = copyRumor.NoOfPages;
             Player = copyRumor.Player;
@@ -28,9 +29,10 @@ namespace IDPParser.Model
             _sourcesList = new List<TMRumorSource>();
         }
 
-        public TMRumor(string id, string url, int noOfPages)
+        public TMRumor(string id, string title, string url, int noOfPages)
         {
             Id = id;
+            Title = title;
             Url = url;
             NoOfPages = noOfPages;
             Player = new TMPlayer();
@@ -41,6 +43,7 @@ namespace IDPParser.Model
         }
 
         public string Id { get; set; }
+        public string Title { get; set; }
         public string Url { get; set; }
         
         public TMPlayer Player { get; set; }
@@ -51,7 +54,7 @@ namespace IDPParser.Model
         public int NoOfPages { get; set; }
         public int NoOfSources { get; set; }
         public bool IsParsed { get; set; }
-        public bool FixedSourceExists { get; set; }
+        public bool isFixedSourceExist { get; set; }
 
 
         public IList<TMRumorSource> GetSources()

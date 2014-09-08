@@ -36,21 +36,28 @@ namespace IDPParser.View
         {
             //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
             //_tmParser.ParsePlayer(pu);
-            
-
+            /*
+            const string filename = "clubList.xml";
+            Utils.RetrieveClubs(filename);
+            */
+             
             _tmParser.ParseForum();
             var task = _tmParser.NavigateToRumorPages();
             task.ContinueWith(t =>
             {
                 MessageBox.Show("Navigation done!");
                 _tmParser.UpdateRumorsSources();
-                //CreateExcelFile.CreateRumorsExcelDocument(tmParser.getRumorsList(), "C:\\Sample_Rumors.xlsx");
-                //CreateExcelFile.CreateExcelDocument(tmParser.getRumorsSourcesList(), "C:\\Sample_RumorsSources.xlsx");
+                MessageBox.Show("Rumor Sources updated!");
+
+                _tmParser.UpdateInterestedClubs();
+                MessageBox.Show("Interested Clubs retrieved!");
 
                 CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
                     _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
+                MessageBox.Show("Excel sheet created!");
+
             }, TaskScheduler.FromCurrentSynchronizationContext());
-        
-              }
+            
+        }
     }
 }

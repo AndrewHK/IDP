@@ -26,6 +26,8 @@ namespace IDPParser.Control
     /// </summary>
     public class TMHTMLParser
     {
+        private const string SerializedClubListFile = "clubList.xml";
+
         private readonly List<TMRumor> _rumorList;
         private readonly List<TMRumorSource> _rumorSourcesList;
 
@@ -56,34 +58,8 @@ namespace IDPParser.Control
 
         private void SetWebBrowsers()
         {
-            _mainWb = new WebBrowser {ScriptErrorsSuppressed = true};
-            _playerWb = new WebBrowser {ScriptErrorsSuppressed = true};
-        }
-
-        private string GetHtmlFromUrl(string urlAddress)
-        {
-            var request = (HttpWebRequest) WebRequest.Create(RumorMillUrl);
-
-            // Set some reasonable limits on resources used by this request
-            request.MaximumAutomaticRedirections = 4;
-            request.MaximumResponseHeadersLength = 4;
-            // Set credentials to use for this request.
-            request.Credentials = CredentialCache.DefaultCredentials;
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0";
-            var response = (HttpWebResponse) request.GetResponse();
-
-            // Get the stream associated with the response.
-            var receiveStream = response.GetResponseStream();
-
-            // Pipes the stream to a higher level stream reader with the required encoding format. 
-            var readStream = new StreamReader(receiveStream, Encoding.UTF8);
-
-            Console.WriteLine("Response stream received.");
-            var source = readStream.ReadToEnd();
-            response.Close();
-            readStream.Close();
-
-            return source;
+            _mainWb = new WebBrowser { ScriptErrorsSuppressed = true };
+            _playerWb = new WebBrowser { ScriptErrorsSuppressed = true };
         }
 
         private int GetRumorIndex(string rumorId = null)
@@ -115,14 +91,10 @@ namespace IDPParser.Control
             return _rumorSourcesList;
         }
 
-        private string generateClassSelectorString(string className)
-        {
-            return "contains(concat(' ',normalize-space(@class),' '),' " + className + " ')";
-        }
 
         public void ParseForum()
         {
-            var htmlData = GetHtmlFromUrl(RumorMillUrl);
+            var htmlData = Utils.GetHtmlFromUrl(RumorMillUrl);
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlData);
 
@@ -130,7 +102,7 @@ namespace IDPParser.Control
             foreach (
                 var linkNode in
                     htmlDoc.DocumentNode.SelectNodes("//a[" +
-                                                     generateClassSelectorString("board_titel spielprofil_tooltip") +
+                                                     Utils.GenerateClassSelectorString("board_titel spielprofil_tooltip") +
                                                      "]"))
             {
                 var att = linkNode.Attributes["href"];
@@ -140,7 +112,8 @@ namespace IDPParser.Control
                     : 1;
                 var url = DomainUrl + att.Value;
                 var id = url.Substring(url.LastIndexOf('/') + 1);
-                _rumorList.Add(new TMRumor(id, url, noOfPages));
+                var title = linkNode.InnerText.Trim();
+                _rumorList.Add(new TMRumor(id, title, url, noOfPages));
             }
         }
 
@@ -244,51 +217,60 @@ namespace IDPParser.Control
             if (htmlDoc.DocumentNode == null) return false;
             try
             {
+                var isFixedSourceNotParsed = true;
                 //Get Sources
-                var isFirstSourceNode = true;
                 foreach (
                     var sourceDiv in
-                        htmlDoc.DocumentNode.SelectNodes("//div[" + generateClassSelectorString("forum-post-data") +
-                                                         "]/div[" + generateClassSelectorString("box-header-forum") +
+                        htmlDoc.DocumentNode.SelectNodes("//div[" + Utils.GenerateClassSelectorString("forum-post-data") +
+                                                         "]/div[" + Utils.GenerateClassSelectorString("box-header-forum") +
                                                          "]"))
                 {
-                    if (_rumorList[ri].FixedSourceExists && isFirstSourceNode)
+                    try
                     {
-                        isFirstSourceNode = false;
-                        continue;
+                        if (_rumorList[ri].isFixedSourceExist && isFixedSourceNotParsed)
+                        {
+                            isFixedSourceNotParsed = false;
+                            continue;
+                        }
+
+                        var url = sourceDiv.SelectSingleNode("a").Attributes["href"].Value;
+                        var name = sourceDiv.InnerText.Substring("QUELLE: ".Length).Trim();
+                        var text = sourceDiv.NextSibling.InnerText;
+
+                        var tempNodes =
+                            sourceDiv.SelectNodes("preceding::div[" + Utils.GenerateClassSelectorString("forum-datum") +
+                                                  "]");
+
+                        var dateNode = tempNodes[tempNodes.Count - 1];
+                        var dateWithUhr = dateNode.InnerText.Trim();
+
+                        var date = dateWithUhr.Substring(0, dateWithUhr.Length - 3).Trim();
+
+                        tempNodes =
+                            sourceDiv.SelectNodes("preceding::div[" + Utils.GenerateClassSelectorString("fs17") + "]");
+                        var headlineNode = tempNodes[0];
+                        var headline = headlineNode.FirstChild.InnerText.Trim();
+
+                        var rumorSource = new TMRumorSource(_rumorList[ri].Id, headline, date, name, url, text);
+                        _rumorList[ri].AddSource(rumorSource);
+                        _rumorSourcesList.Add(rumorSource);
                     }
-
-                    var url = sourceDiv.SelectSingleNode("a").Attributes["href"].Value;
-                    var name = sourceDiv.InnerText.Substring("QUELLE: ".Length).Trim();
-                    var text = sourceDiv.NextSibling.InnerText;
-
-                    var tempNodes =
-                        sourceDiv.SelectNodes("preceding::div[" + generateClassSelectorString("forum-datum") + "]");
-
-                    var dateNode = tempNodes[tempNodes.Count - 1];
-                    var dateWithUhr = dateNode.InnerText.Trim();
-
-                    var date = dateWithUhr.Substring(0, dateWithUhr.Length - 3).Trim();
-
-                    tempNodes = sourceDiv.SelectNodes("preceding::div[" + generateClassSelectorString("fs17") + "]");
-                    var headlineNode = tempNodes[0];
-                    var headline = headlineNode.FirstChild.InnerText.Trim();
-
-                    var rumorSource = new TMRumorSource(_rumorList[ri].Id, headline, date, name, url, text);
-                    _rumorList[ri].AddSource(rumorSource);
-                    _rumorSourcesList.Add(rumorSource);
+                    catch (NullReferenceException e)
+                    {
+                        AppendLog(string.Format("Skipping an invalid Rumor Source : {0}, ", e.Message));
+                    }
                 }
 
                 if (_rumorList[ri].IsParsed) return true;
                 //Get Player
                 var playerTitleNode =
-                    htmlDoc.DocumentNode.SelectSingleNode("//div[" + generateClassSelectorString("spielername-profil") +
+                    htmlDoc.DocumentNode.SelectSingleNode("//div[" + Utils.GenerateClassSelectorString("spielername-profil") +
                                                           "]");
                 var playerName = playerTitleNode.InnerText;
                 var playerUrl = playerTitleNode.SelectSingleNode("a").Attributes["href"].Value;
                 var playerId = playerUrl.Substring(playerUrl.LastIndexOf('/') + 1);
                 var playerDetailsNode =
-                    htmlDoc.DocumentNode.SelectSingleNode("//table[" + generateClassSelectorString("profilheader") + "]");
+                    htmlDoc.DocumentNode.SelectSingleNode("//table[" + Utils.GenerateClassSelectorString("profilheader") + "]");
                 var playerDob = playerDetailsNode.ChildNodes[1].LastChild.PreviousSibling.InnerText;
                 var playerAge = playerDetailsNode.ChildNodes[3].LastChild.PreviousSibling.InnerText;
                 var playerNationality = playerDetailsNode.ChildNodes[5].LastChild.PreviousSibling.InnerText.Trim();
@@ -313,8 +295,8 @@ namespace IDPParser.Control
 
                 // Check if there is a fixed source
                 var fixedSourceNode =
-                    htmlDoc.DocumentNode.SelectSingleNode("//div[" + generateClassSelectorString("box") + "]");
-                _rumorList[ri].FixedSourceExists = fixedSourceNode != null;
+                    htmlDoc.DocumentNode.SelectSingleNode("//div[" + Utils.GenerateClassSelectorString("box") + "]");
+                _rumorList[ri].isFixedSourceExist = fixedSourceNode != null;
                 return true;
             }
             catch (Exception e)
@@ -336,8 +318,8 @@ namespace IDPParser.Control
             try
             {
                 //div[contains(concat(' ',normalize-space(@class),' '),' eight columns ')]/div/div[contains(concat(' ',normalize-space(@class),' '),' responsive-table ')]/table/tbody/tr
-                var xpath = "//div[" + generateClassSelectorString("eight columns") + "]/div/div[" +
-                               generateClassSelectorString("responsive-table") + "]/table/tbody/tr";
+                var xpath = "//div[" + Utils.GenerateClassSelectorString("eight columns") + "]/div/div[" +
+                               Utils.GenerateClassSelectorString("responsive-table") + "]/table/tbody/tr";
 
                 foreach (
                     var transferNodeRow in
@@ -386,7 +368,7 @@ namespace IDPParser.Control
                 var rumorCurrentClubId = rumor.CurrentClub.Id;
                 var detectedCurrentClubsIdList = new List<string>();
 
-                var postfix = (char) 64;
+                var postfix = (char)64;
                 foreach (
                     var rumorSource in
                         rumorSources.Where(
@@ -409,6 +391,34 @@ namespace IDPParser.Control
                 }
             }
             _rumorList.AddRange(splitRumorList);
+        }
+
+        public void UpdateInterestedClubs()
+        {
+            var clubList = Utils.DeSerializeObject<List<TMClub>>(SerializedClubListFile);
+
+            AppendLog("Getting Clubs from stored file ..");
+            AppendLog(string.Format("Found {0} clubs ! Checking the interested club for each rumor", clubList.Count));
+
+            foreach (var rumor in _rumorList)
+            {
+                var rumorTitle = rumor.Title;
+                try
+                {
+                    foreach (var club in clubList.Where(club => club.ContainsName(rumorTitle)))
+                    {
+                        rumor.InterestedClub = club;
+                        AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, club.Name));
+
+                        break;
+                    }
+                }
+                catch (NullReferenceException ex)
+                {
+                    
+                }
+            }
+
         }
     }
 }
