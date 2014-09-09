@@ -26,7 +26,6 @@ namespace IDPParser.Control
     /// </summary>
     public class TMHTMLParser
     {
-        private const string SerializedClubListFile = "clubList.xml";
 
         private readonly List<TMRumor> _rumorList;
         private readonly List<TMRumorSource> _rumorSourcesList;
@@ -393,9 +392,9 @@ namespace IDPParser.Control
             _rumorList.AddRange(splitRumorList);
         }
 
-        public void UpdateInterestedClubs()
+        public void UpdateInterestedClubs(string filename)
         {
-            var clubList = Utils.DeSerializeObject<List<TMClub>>(SerializedClubListFile);
+            var clubList = Utils.DeSerializeObject<List<TMClub>>(filename);
 
             AppendLog("Getting Clubs from stored file ..");
             AppendLog(string.Format("Found {0} clubs ! Checking the interested club for each rumor", clubList.Count));

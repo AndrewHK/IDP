@@ -37,10 +37,11 @@ namespace IDPParser.View
             //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
             //_tmParser.ParsePlayer(pu);
             
-            const string filename = "clubList2.xml";
+            const string filename = "../../Data/clubList.xml";
+            /*
             Utils.RetrieveClubs(filename);
-            
-            /* 
+            */
+             
             _tmParser.ParseForum();
             var task = _tmParser.NavigateToRumorPages();
             task.ContinueWith(t =>
@@ -49,7 +50,7 @@ namespace IDPParser.View
                 _tmParser.UpdateRumorsSources();
                 MessageBox.Show("Rumor Sources updated!");
 
-                _tmParser.UpdateInterestedClubs();
+                _tmParser.UpdateInterestedClubs(filename);
                 MessageBox.Show("Interested Clubs retrieved!");
 
                 CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
@@ -57,7 +58,7 @@ namespace IDPParser.View
                 MessageBox.Show("Excel sheet created!");
 
             }, TaskScheduler.FromCurrentSynchronizationContext());
-            */
+            
         }
     }
 }
