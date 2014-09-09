@@ -227,7 +227,7 @@ namespace IDPParser.Control
                 {
                     try
                     {
-                        if (_rumorList[ri].isFixedSourceExist && isFixedSourceNotParsed)
+                        if (_rumorList[ri].IsFixedSourceExist && isFixedSourceNotParsed)
                         {
                             isFixedSourceNotParsed = false;
                             continue;
@@ -296,7 +296,7 @@ namespace IDPParser.Control
                 // Check if there is a fixed source
                 var fixedSourceNode =
                     htmlDoc.DocumentNode.SelectSingleNode("//div[" + Utils.GenerateClassSelectorString("box") + "]");
-                _rumorList[ri].isFixedSourceExist = fixedSourceNode != null;
+                _rumorList[ri].IsFixedSourceExist = fixedSourceNode != null;
                 return true;
             }
             catch (Exception e)
@@ -403,20 +403,15 @@ namespace IDPParser.Control
             foreach (var rumor in _rumorList)
             {
                 var rumorTitle = rumor.Title;
-                try
-                {
-                    foreach (var club in clubList.Where(club => club.ContainsName(rumorTitle)))
-                    {
-                        rumor.InterestedClub = club;
-                        AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, club.Name));
 
-                        break;
-                    }
-                }
-                catch (NullReferenceException ex)
+                foreach (var club in clubList.Where(club => club.ContainsName(rumorTitle)))
                 {
-                    
+                    rumor.InterestedClub = club;
+                    AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, club.Name));
+
+                    break;
                 }
+
             }
 
         }

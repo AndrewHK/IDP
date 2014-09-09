@@ -19,14 +19,14 @@ namespace IDPParser.Control
     {
         public static void RetrieveClubs(string fileName)
         {
-            var clubList = new List<TMClub>();
             const string baseUrl = "http://www.transfermarkt.de/test/startseite/verein/";
+            const int maxRetryCount = 2;
 
-            var errorCount = 0;
-
-            for (var count = 1; errorCount < 100; count++)
+            var clubList = new List<TMClub>();
+            var retryCount = 0;
+            for (var count = 1; count < 50000; count++)
             {
-                Debug.WriteLine("Status : Count({0}), Error Count({1}), Club List Size({2})",count, errorCount, clubList.Count);
+                Debug.WriteLine("Status : Count({0}), Club List Size({1})",count, clubList.Count);
 
                 var currUrl = baseUrl + count;
                 var htmlData = string.Empty;
@@ -37,16 +37,21 @@ namespace IDPParser.Control
                 catch (WebException e)
                 {
                     Debug.WriteLine("Club ({0}) threw a web exception {1}",count, e.Message);
-
-                    errorCount++;
+                    if (((HttpWebResponse) e.Response).StatusCode != HttpStatusCode.NotFound && retryCount < maxRetryCount)
+                    {
+                        Debug.WriteLine("Club ({0}), Trying again", count);
+                        count--;
+                        retryCount++;
+                    }
                     continue;
                 }
+                
+
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlData);
 
                 if (htmlDoc.DocumentNode == null)
                 {
-                    errorCount++;
                     continue;
                 }
                 var clubNameDivNode = htmlDoc.DocumentNode.SelectSingleNode("//div[" + GenerateClassSelectorString("spielername-profil") + "]");
@@ -67,7 +72,9 @@ namespace IDPParser.Control
 
 
                 clubList.Add(new TMClub(count.ToString(), clubName, shortClubName));
-                errorCount = 0;
+
+                //Reset retry and for the next pages
+                retryCount = 0;
 
             }
             SerializeObject(clubList, fileName);

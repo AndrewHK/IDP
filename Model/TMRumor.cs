@@ -54,7 +54,7 @@ namespace IDPParser.Model
         public int NoOfPages { get; set; }
         public int NoOfSources { get; set; }
         public bool IsParsed { get; set; }
-        public bool isFixedSourceExist { get; set; }
+        public bool IsFixedSourceExist { get; set; }
 
 
         public IList<TMRumorSource> GetSources()
