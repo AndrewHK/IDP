@@ -7,6 +7,7 @@
 */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -91,7 +92,7 @@ namespace IDPParser.Control
         }
 
 
-        public void ParseForum()
+        public void ParseForum(List<string> limitedList = null)
         {
             var htmlData = Utils.GetHtmlFromUrl(RumorMillUrl);
             var htmlDoc = new HtmlDocument();
@@ -112,6 +113,11 @@ namespace IDPParser.Control
                 var url = DomainUrl + att.Value;
                 var id = url.Substring(url.LastIndexOf('/') + 1);
                 var title = linkNode.InnerText.Trim();
+
+                if (limitedList != null && !limitedList.Contains(id))
+                {
+                    continue;
+                }
                 _rumorList.Add(new TMRumor(id, title, url, noOfPages));
             }
         }
@@ -289,7 +295,7 @@ namespace IDPParser.Control
                     playerDetailsNode.ChildNodes[15].LastChild.PreviousSibling.SelectSingleNode("a").Attributes["href"]
                         .Value;
                 var currentClubId = currentClubUrl.Substring(currentClubUrl.LastIndexOf('/') + 1);
-                _rumorList[ri].CurrentClub = new TMClub(currentClubId, currentClubName);
+                //_rumorList[ri].CurrentClub = new TMClub(currentClubId, currentClubName);
                 _rumorList[ri].IsParsed = true;
 
                 // Check if there is a fixed source
@@ -314,15 +320,16 @@ namespace IDPParser.Control
             htmlDoc.LoadHtml(htmlData);
 
             if (htmlDoc.DocumentNode == null) return false;
-            try
-            {
-                //div[contains(concat(' ',normalize-space(@class),' '),' eight columns ')]/div/div[contains(concat(' ',normalize-space(@class),' '),' responsive-table ')]/table/tbody/tr
-                var xpath = "//div[" + Utils.GenerateClassSelectorString("eight columns") + "]/div/div[" +
-                               Utils.GenerateClassSelectorString("responsive-table") + "]/table/tbody/tr";
 
-                foreach (
-                    var transferNodeRow in
-                        htmlDoc.DocumentNode.SelectNodes(xpath))
+            //div[contains(concat(' ',normalize-space(@class),' '),' eight columns ')]/div/div[contains(concat(' ',normalize-space(@class),' '),' responsive-table ')]/table/tbody/tr
+            var xpath = "//div[" + Utils.GenerateClassSelectorString("eight columns") + "]/div/div[" +
+                        Utils.GenerateClassSelectorString("responsive-table") + "]/table/tbody/tr";
+            Exception errorDetected = null;
+            foreach (
+                var transferNodeRow in
+                    htmlDoc.DocumentNode.SelectNodes(xpath))
+            {
+                try
                 {
                     var leihe = transferNodeRow.ChildNodes[19].InnerText;
                     if (leihe.Trim().Length != 0)
@@ -340,14 +347,17 @@ namespace IDPParser.Control
                     var currentClub = new TMClub(currentClubId, currentClubName);
 
                     _rumorList[ri].Player.AddTransfer(date, currentClub);
+                    errorDetected = null;
                 }
-                return true;
+                catch (Exception e)
+                {
+                    errorDetected = e;
+                }
             }
-            catch (Exception e)
-            {
-                AppendLog(string.Format("Player has incomplete details : {0}", e.Message));
-                return false;
-            }
+
+            if (errorDetected == null) return true;
+            AppendLog(string.Format("Player has incomplete details : {0}", errorDetected.Message));
+            return false;
         }
 
         public void UpdateRumorsSources()
@@ -364,7 +374,8 @@ namespace IDPParser.Control
             foreach (var rumor in _rumorList)
             {
                 var rumorSources = rumor.GetSources();
-                var rumorCurrentClubId = rumor.CurrentClub.Id;
+
+                var rumorCurrentClubId = rumorSources[0].CurrentClubId;
                 var detectedCurrentClubsIdList = new List<string>();
 
                 var postfix = (char)64;
@@ -380,10 +391,9 @@ namespace IDPParser.Control
                         detectedCurrentClubsIdList.Add(rumorSource.CurrentClubId);
                         postfix++;
 
-                        var newSplitRumor = new TMRumor(rumor);
-                        newSplitRumor.CurrentClub.Id = rumorSource.CurrentClubId;
-                        newSplitRumor.CurrentClub.Name = rumorSource.CurrentClubName;
-                        newSplitRumor.Id = rumorSource.RumorId + postfix;
+                        var newSplitRumor = new TMRumor(rumor) { Id = rumorSource.RumorId + postfix };
+                        //newSplitRumor.CurrentClub.Id = rumorSource.CurrentClubId;
+                        //newSplitRumor.CurrentClub.Name = rumorSource.CurrentClubName;
                         splitRumorList.Add(newSplitRumor);
                     }
                     rumorSource.SplitRumor = rumorSource.RumorId + postfix;
@@ -397,22 +407,32 @@ namespace IDPParser.Control
             var clubList = Utils.DeSerializeObject<List<TMClub>>(filename);
 
             AppendLog("Getting Clubs from stored file ..");
-            AppendLog(string.Format("Found {0} clubs ! Checking the interested club for each rumor", clubList.Count));
+            AppendLog(string.Format("Found {0} clubs ! Checking the interested club for each rumor source", clubList.Count));
 
             foreach (var rumor in _rumorList)
             {
                 var rumorTitle = rumor.Title;
+                var interestedClub = clubList.FirstOrDefault(c => c.ContainsName(rumorTitle));
 
-                foreach (var club in clubList.Where(club => club.ContainsName(rumorTitle)))
+                var currRumorSources = rumor.GetSources();
+                foreach (var rumorSource in currRumorSources)
                 {
-                    rumor.InterestedClub = club;
-                    AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, club.Name));
-
-                    break;
+                    rumorSource.SetInterestedClub(interestedClub);
                 }
+                AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, interestedClub == null ? string.Empty : interestedClub.Name));
+            }
+        }
+
+        public void DetermineRumorType()
+        {
+            AppendLog("Getting Types for each Rumor ..");
+
+            foreach (var rumor in _rumorList)
+            {
+                rumor.Type = rumor.GetSources().First().IsRumorSuccessful() ? TMRumorType.Sucessful : TMRumorType.Rumor;
+                AppendLog(string.Format("Rumor ({0}) : Type ({1})", rumor.Title, rumor.Type));
 
             }
-
         }
     }
 }

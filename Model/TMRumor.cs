@@ -23,8 +23,6 @@ namespace IDPParser.Model
             Url = copyRumor.Url;
             NoOfPages = copyRumor.NoOfPages;
             Player = copyRumor.Player;
-            CurrentClub = copyRumor.CurrentClub;
-            InterestedClub = copyRumor.InterestedClub;
             Type = copyRumor.Type;
             _sourcesList = new List<TMRumorSource>();
         }
@@ -36,21 +34,17 @@ namespace IDPParser.Model
             Url = url;
             NoOfPages = noOfPages;
             Player = new TMPlayer();
-            CurrentClub = new TMClub();
-            InterestedClub = new TMClub();
-            Type = TMRumorType.Undecided;
+            Type = TMRumorType.Rumor;
             _sourcesList = new List<TMRumorSource>();
         }
 
         public string Id { get; set; }
         public string Title { get; set; }
         public string Url { get; set; }
-        
+
         public TMPlayer Player { get; set; }
-        public TMClub CurrentClub { get; set; }
-        public TMClub InterestedClub { get; set; }
         public TMRumorType Type { get; set; }
-        
+
         public int NoOfPages { get; set; }
         public int NoOfSources { get; set; }
         public bool IsParsed { get; set; }

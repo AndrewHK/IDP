@@ -82,7 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="bin\Debug\Sample_Complete.xlsx" />
+    <None Include="Data\Sample_Complete.xlsx" />
     <None Include="packages.config" />
     <None Include="TODo.txt" />
   </ItemGroup>
@@ -92,8 +92,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="bin\Debug\clubList.xml" />
-    <Content Include="bin\Debug\clubList2.xml" />
+    <Content Include="Data\clubList.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

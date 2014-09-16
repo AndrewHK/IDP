@@ -261,7 +261,7 @@ namespace IDPParser.Control
                                                                          DBNull.Value);
                         }
                     }
-                    else if (info.PropertyType == typeof (TMClub) && info.Name.Equals("CurrentClub"))
+                    /*else if (info.PropertyType == typeof (TMClub) && info.Name.Equals("CurrentClub"))
                     {
                         foreach (var innerInfo in typeof (TMClub).GetProperties())
                         {
@@ -282,7 +282,7 @@ namespace IDPParser.Control
                                 row[info.Name + "_" + innerInfo.Name] = (innerInfo.GetValue(t.InterestedClub, null) ??
                                                                          DBNull.Value);
                         }
-                    }
+                    }*/
                     else
                     {
                         if (!IsNullableType(info.PropertyType))

@@ -7,6 +7,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -23,7 +24,7 @@ namespace IDPParser.Model
             RumorId = rumorId;
             Headline = headline;
             _date = DateTime.ParseExact(date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
-;
+            ;
             Name = name;
             Url = url;
             Text = text;
@@ -47,6 +48,14 @@ namespace IDPParser.Model
         {
             get { return _currentClub != null ? _currentClub.Name : string.Empty; }
         }
+        public string InterestedClubId
+        {
+            get { return _interestedClub != null ? _interestedClub.Id : string.Empty; }
+        }
+        public string InterestedClubName
+        {
+            get { return _interestedClub != null ? _interestedClub.Name : string.Empty; }
+        }
 
         public string Date
         {
@@ -63,6 +72,7 @@ namespace IDPParser.Model
 
         private DateTime _date;
         private TMClub _currentClub;
+        private TMClub _interestedClub;
         private TMPlayer _player;
         private const string DateFormat = "dd.MM.yyyy - HH:mm";
 
@@ -71,10 +81,37 @@ namespace IDPParser.Model
             _player = player;
         }
 
+        public bool IsRumorSuccessful()
+        {
+            var playerTransfers = _player.GetTransferDictionary();
+
+            try
+            {
+                var currClubKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(CurrentClubId));
+                var interestedClubKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId));
+
+                if (_date.Date.CompareTo(currClubKvp.Key.Date) > 0 &&
+                    _date.Date.CompareTo(interestedClubKvp.Key.Date) <= 0)
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                
+            }
+            return false;
+
+        }
+        public void SetInterestedClub(TMClub club)
+        {
+            _interestedClub = club;
+        }
+
         public void DetermineCurrentClub()
         {
             //var keysCollection = Player.TransferDictionary.Keys;
-            
+
             var playerTransfers = _player.GetTransferDictionary();
             /* Loop on the SORTED dictionary till it finds a date that is after the given rumor source date,
              * if no transfers (like in /emmanual-sunday/profil/spieler/156476) return
@@ -84,13 +121,18 @@ namespace IDPParser.Model
             */
             if (playerTransfers.Count <= 0) return;
             var prevKey = DateTime.MinValue;
+            var prevprevKey = DateTime.MinValue;
+
             foreach (var kvp in playerTransfers)
             {
-                if (kvp.Key.CompareTo(_date) > 0)
+                if (kvp.Key.Date.CompareTo(_date.Date) >= 0)
                 {
-                    _currentClub = playerTransfers[prevKey];
+                    var daysDiff = (_date - prevKey).TotalDays;
+
+                    _currentClub = daysDiff >= 10 ? playerTransfers[prevKey] : playerTransfers[prevprevKey];
                     return;
                 }
+                prevprevKey = prevKey;
                 prevKey = kvp.Key;
             }
             _currentClub = playerTransfers[prevKey];
