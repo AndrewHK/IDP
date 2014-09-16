@@ -19,12 +19,11 @@ namespace IDPParser.Model
     public class TMRumorSource
     {
 
-        public TMRumorSource(string rumorId, string headline, string date, string name, string url, string text)
+        public TMRumorSource(string rumorId, string date, string name, string url, string text)
         {
             RumorId = rumorId;
-            Headline = headline;
             _date = DateTime.ParseExact(date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
-            ;
+            
             Name = name;
             Url = url;
             Text = text;
@@ -64,7 +63,6 @@ namespace IDPParser.Model
                 return _date.ToShortDateString();
             }
         }
-        public string Headline { get; set; }
         public string Name { get; set; }
         public string Url { get; set; }
         public string Text { get; set; }

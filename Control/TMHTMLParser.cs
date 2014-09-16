@@ -46,6 +46,7 @@ namespace IDPParser.Control
         {
             DomainUrl = "http://www.transfermarkt.de";
             RumorMillUrl = "http://www.transfermarkt.de/rumour-mill/detail/forum/500/";
+            ForumPages = 10;
             _rumorList = new List<TMRumor>();
             _rumorSourcesList = new List<TMRumorSource>();
 
@@ -55,6 +56,7 @@ namespace IDPParser.Control
 
         public string DomainUrl { get; set; }
         public string RumorMillUrl { get; set; }
+        public int ForumPages { get; set; }
 
         private void SetWebBrowsers()
         {
@@ -94,32 +96,39 @@ namespace IDPParser.Control
 
         public void ParseForum(List<string> limitedList = null)
         {
-            var htmlData = Utils.GetHtmlFromUrl(RumorMillUrl);
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(htmlData);
-
-            if (htmlDoc.DocumentNode == null) return;
-            foreach (
-                var linkNode in
-                    htmlDoc.DocumentNode.SelectNodes("//a[" +
-                                                     Utils.GenerateClassSelectorString("board_titel spielprofil_tooltip") +
-                                                     "]"))
+            for (var i = 1; i <= 10; i++)
             {
-                var att = linkNode.Attributes["href"];
+                var link = string.Format("{0}page/{1}", RumorMillUrl, i);
 
-                var noOfPages = (linkNode.ParentNode.NextSibling.NextSibling.ChildNodes.Count > 1)
-                    ? Int16.Parse(linkNode.ParentNode.NextSibling.NextSibling.LastChild.PreviousSibling.InnerText)
-                    : 1;
-                var url = DomainUrl + att.Value;
-                var id = url.Substring(url.LastIndexOf('/') + 1);
-                var title = linkNode.InnerText.Trim();
+                var htmlData = Utils.GetHtmlFromUrl(link);
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(htmlData);
 
-                if (limitedList != null && !limitedList.Contains(id))
+                if (htmlDoc.DocumentNode == null) return;
+                foreach (
+                    var linkNode in
+                        htmlDoc.DocumentNode.SelectNodes("//a[" +
+                                                         Utils.GenerateClassSelectorString(
+                                                             "board_titel spielprofil_tooltip") +
+                                                         "]"))
                 {
-                    continue;
+                    var att = linkNode.Attributes["href"];
+
+                    var noOfPages = (linkNode.ParentNode.NextSibling.NextSibling.ChildNodes.Count > 1)
+                        ? Int16.Parse(linkNode.ParentNode.NextSibling.NextSibling.LastChild.PreviousSibling.InnerText)
+                        : 1;
+                    var url = DomainUrl + att.Value;
+                    var id = url.Substring(url.LastIndexOf('/') + 1);
+                    var title = linkNode.InnerText.Trim();
+
+                    if (limitedList != null && !limitedList.Contains(id))
+                    {
+                        continue;
+                    }
+                    _rumorList.Add(new TMRumor(id, title, url, noOfPages));
                 }
-                _rumorList.Add(new TMRumor(id, title, url, noOfPages));
             }
+            AppendLog(string.Format("{0} forum entries were found", _rumorList.Count));
         }
 
         public async Task NavigateToRumorPages()
@@ -141,6 +150,7 @@ namespace IDPParser.Control
             {
                 _currRumorId = rumor.Id;
                 int i;
+                var isRumorOk = false;
                 const int timeout = 10000;
                 for (i = 1; i <= rumor.NoOfPages; i++)
                 {
@@ -154,7 +164,7 @@ namespace IDPParser.Control
                     var completionTask = isRumorPageCompleted.Task;
                     if (await Task.WhenAny(completionTask, Task.Delay(timeout)) == completionTask)
                     {
-                        var isRumorOk = ParseRumor();
+                        isRumorOk = ParseRumor();
                         if (isRumorOk)
                         {
                             AppendLog(string.Format("One Page is parsed, ID: {0}  URL: {1}", rumor.Id, _mainWb.Url.AbsolutePath));
@@ -167,8 +177,11 @@ namespace IDPParser.Control
                         AppendLog(string.Format("One Page had a timeout, ID: {0}, URL: {1}", rumor.Id, _mainWb.Url.AbsolutePath));
                     }
                 }
-                await NavigateToPlayerPage(rumor.Player);
-                AppendLog(string.Format("Rumor: {0}, {1} page(s) ---- {2}", rumor.Id, i - 1, counter++));
+                if (isRumorOk)
+                {
+                    await NavigateToPlayerPage(rumor.Player);
+                    AppendLog(string.Format("Rumor: {0}, {1} page(s) ---- {2}", rumor.Id, i - 1, counter++));
+                }
             }
         }
 
@@ -218,7 +231,9 @@ namespace IDPParser.Control
             htmlDoc.LoadHtml(htmlData);
 
             //div[contains(concat(' ',normalize-space(@class),' '),' forum-post-data ')]/div[]
-
+            var xpath = "//div[" + Utils.GenerateClassSelectorString("forum-post-data") +
+                                                         "]/div[" + Utils.GenerateClassSelectorString("box-header-forum") +
+                                                         "]";
             if (htmlDoc.DocumentNode == null) return false;
             try
             {
@@ -226,9 +241,7 @@ namespace IDPParser.Control
                 //Get Sources
                 foreach (
                     var sourceDiv in
-                        htmlDoc.DocumentNode.SelectNodes("//div[" + Utils.GenerateClassSelectorString("forum-post-data") +
-                                                         "]/div[" + Utils.GenerateClassSelectorString("box-header-forum") +
-                                                         "]"))
+                        htmlDoc.DocumentNode.SelectNodes(xpath))
                 {
                     try
                     {
@@ -251,12 +264,7 @@ namespace IDPParser.Control
 
                         var date = dateWithUhr.Substring(0, dateWithUhr.Length - 3).Trim();
 
-                        tempNodes =
-                            sourceDiv.SelectNodes("preceding::div[" + Utils.GenerateClassSelectorString("fs17") + "]");
-                        var headlineNode = tempNodes[0];
-                        var headline = headlineNode.FirstChild.InnerText.Trim();
-
-                        var rumorSource = new TMRumorSource(_rumorList[ri].Id, headline, date, name, url, text);
+                        var rumorSource = new TMRumorSource(_rumorList[ri].Id, date, name, url, text);
                         _rumorList[ri].AddSource(rumorSource);
                         _rumorSourcesList.Add(rumorSource);
                     }
@@ -374,6 +382,7 @@ namespace IDPParser.Control
             foreach (var rumor in _rumorList)
             {
                 var rumorSources = rumor.GetSources();
+                if(rumorSources == null || rumorSources.Count == 0) continue;
 
                 var rumorCurrentClubId = rumorSources[0].CurrentClubId;
                 var detectedCurrentClubsIdList = new List<string>();
@@ -415,6 +424,8 @@ namespace IDPParser.Control
                 var interestedClub = clubList.FirstOrDefault(c => c.ContainsName(rumorTitle));
 
                 var currRumorSources = rumor.GetSources();
+                if (currRumorSources == null || currRumorSources.Count == 0) continue;
+
                 foreach (var rumorSource in currRumorSources)
                 {
                     rumorSource.SetInterestedClub(interestedClub);
@@ -429,9 +440,11 @@ namespace IDPParser.Control
 
             foreach (var rumor in _rumorList)
             {
-                rumor.Type = rumor.GetSources().First().IsRumorSuccessful() ? TMRumorType.Sucessful : TMRumorType.Rumor;
-                AppendLog(string.Format("Rumor ({0}) : Type ({1})", rumor.Title, rumor.Type));
+                var currRumorSources = rumor.GetSources();
+                if (currRumorSources == null || currRumorSources.Count == 0) continue;
 
+                rumor.Type = currRumorSources.First().IsRumorSuccessful() ? TMRumorType.Sucessful : TMRumorType.Rumor;
+                AppendLog(string.Format("Rumor ({0}) : Type ({1})", rumor.Title, rumor.Type));
             }
         }
     }

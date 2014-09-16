@@ -45,15 +45,7 @@ namespace IDPParser.View
             //var limitedList = new List<string> { "1007217", "1007227", "1007210", "1007215" };
             _tmParser.ParseForum();
             var task = _tmParser.NavigateToRumorPages();
-            task
-                .ContinueWith(t => t.Exception.Handle(ex =>
-                                   {
-                                       Console.WriteLine("CUSTOM-ERROR: " + ex.Message, ex);
-                                       return false;
-                                   })
-
-            , TaskContinuationOptions.OnlyOnFaulted)
-                .ContinueWith(t =>
+            task.ContinueWith(t =>
             {
                 MessageBox.Show("Navigation done!");
                 _tmParser.UpdateRumorsSources();
