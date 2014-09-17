@@ -94,9 +94,9 @@ namespace IDPParser.Control
         }
 
 
-        public void ParseForum(List<string> limitedList = null)
+        public void ParseForum(List<string> limitedList = null, int startIndex = 1, int endIndex = 10)
         {
-            for (var i = 1; i <= 10; i++)
+            for (var i = startIndex; i <= endIndex; i++)
             {
                 var link = string.Format("{0}page/{1}", RumorMillUrl, i);
 
@@ -333,34 +333,42 @@ namespace IDPParser.Control
             var xpath = "//div[" + Utils.GenerateClassSelectorString("eight columns") + "]/div/div[" +
                         Utils.GenerateClassSelectorString("responsive-table") + "]/table/tbody/tr";
             Exception errorDetected = null;
-            foreach (
-                var transferNodeRow in
-                    htmlDoc.DocumentNode.SelectNodes(xpath))
+            try
             {
-                try
+                foreach (
+                    var transferNodeRow in
+                        htmlDoc.DocumentNode.SelectNodes(xpath))
                 {
-                    var leihe = transferNodeRow.ChildNodes[19].InnerText;
-                    if (leihe.Trim().Length != 0)
-                        continue;
+                    try
+                    {
+                        var leihe = transferNodeRow.ChildNodes[19].InnerText;
+                        if (leihe.Trim().Length != 0)
+                            continue;
 
-                    var date = transferNodeRow.ChildNodes[3].LastChild.InnerText;
+                        var date = transferNodeRow.ChildNodes[3].LastChild.InnerText;
 
-                    var currentClubName = transferNodeRow.ChildNodes[15].InnerText.Trim();
-                    var currentClubUrl = transferNodeRow.ChildNodes[15].ChildNodes[1].Attributes["href"].Value;
+                        var currentClubName = transferNodeRow.ChildNodes[15].InnerText.Trim();
+                        var currentClubUrl = transferNodeRow.ChildNodes[15].ChildNodes[1].Attributes["href"].Value;
 
-                    var begin = currentClubUrl.LastIndexOf("verein/", StringComparison.Ordinal) + 7;
-                    var end = currentClubUrl.LastIndexOf("/saison", StringComparison.Ordinal);
-                    var currentClubId = currentClubUrl.Substring(begin, end - begin);
+                        var begin = currentClubUrl.LastIndexOf("verein/", StringComparison.Ordinal) + 7;
+                        var end = currentClubUrl.LastIndexOf("/saison", StringComparison.Ordinal);
+                        var currentClubId = currentClubUrl.Substring(begin, end - begin);
 
-                    var currentClub = new TMClub(currentClubId, currentClubName);
+                        var currentClub = new TMClub(currentClubId, currentClubName);
 
-                    _rumorList[ri].Player.AddTransfer(date, currentClub);
-                    errorDetected = null;
+                        _rumorList[ri].Player.AddTransfer(date, currentClub);
+                        errorDetected = null;
+                    }
+                    catch (Exception e)
+                    {
+                        errorDetected = e;
+                    }
                 }
-                catch (Exception e)
-                {
-                    errorDetected = e;
-                }
+            }
+            catch (Exception e)
+            {
+                AppendLog("Player has no transfer histroy ");
+                return false;
             }
 
             if (errorDetected == null) return true;
