@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using IDPParser.Control;
 
 namespace IDPParser.View
@@ -27,13 +28,13 @@ namespace IDPParser.View
             // The InitializeComponent() call is required for Windows Forms designer support.
             //
             InitializeComponent();
-            _tmParser = new TMHTMLParser(logTB);
+            _tmParser = new TMHTMLParser(logTB, progressBar, countLB, maxLB);
             //
             // TODO: Add constructor code after the InitializeComponent() call.
             //
         }
-
-        private void CrawlBtnClick(object sender, EventArgs e)
+        
+        private void CrawlBtn_Click(object sender, EventArgs e)
         {
             //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
             //_tmParser.ParsePlayer(pu);
@@ -48,21 +49,27 @@ namespace IDPParser.View
             task.ContinueWith(t =>
             {
                 MessageBox.Show("Navigation done!");
+                navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+
                 _tmParser.UpdateRumorsSources();
                 MessageBox.Show("Rumor Sources updated!");
+                rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+
 
                 _tmParser.UpdateInterestedClubs(filename);
                 MessageBox.Show("Interested Clubs retrieved!");
+                interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
                 _tmParser.DetermineRumorType();
                 MessageBox.Show("Rumor Types determined!");
+                rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
                 CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
                     _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
                 MessageBox.Show("Excel sheet created!");
+                excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
             }, TaskScheduler.FromCurrentSynchronizationContext());
-
         }
     }
 }

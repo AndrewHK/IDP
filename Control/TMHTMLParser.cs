@@ -36,13 +36,16 @@ namespace IDPParser.Control
         private WebBrowser _mainWb;
         private WebBrowser _playerWb;
 
-        private readonly TextBox _logger;
+        private readonly TextBox _loggerTb;
+        private readonly ProgressBar _progressPb;
+        private readonly Label _counterLb;
+        private readonly Label _maxLb;
         public void AppendLog(string text)
         {
-            _logger.AppendText(text);
-            _logger.AppendText("\r\n");
+            _loggerTb.AppendText(text);
+            _loggerTb.AppendText("\r\n");
         }
-        public TMHTMLParser(TextBox logBox)
+        public TMHTMLParser(TextBox logBox, ProgressBar progressPbBar, Label currCount, Label maxLbCount)
         {
             DomainUrl = "http://www.transfermarkt.de";
             RumorMillUrl = "http://www.transfermarkt.de/rumour-mill/detail/forum/500/";
@@ -50,9 +53,14 @@ namespace IDPParser.Control
             _rumorList = new List<TMRumor>();
             _rumorSourcesList = new List<TMRumorSource>();
 
-            _logger = logBox;
+            _loggerTb = logBox;
+            _progressPb = progressPbBar;
+            _counterLb = currCount;
+            _maxLb = maxLbCount;
+            
             SetWebBrowsers();
         }
+
 
         public string DomainUrl { get; set; }
         public string RumorMillUrl { get; set; }
@@ -96,6 +104,8 @@ namespace IDPParser.Control
 
         public void ParseForum(List<string> limitedList = null, int startIndex = 1, int endIndex = 10)
         {
+            AppendLog(string.Format("Getting forum entries .."));
+
             for (var i = startIndex; i <= endIndex; i++)
             {
                 var link = string.Format("{0}page/{1}", RumorMillUrl, i);
@@ -128,6 +138,8 @@ namespace IDPParser.Control
                     _rumorList.Add(new TMRumor(id, title, url, noOfPages));
                 }
             }
+            _progressPb.Maximum = _rumorList.Count;
+            _maxLb.Text = _rumorList.Count.ToString();
             AppendLog(string.Format("{0} forum entries were found", _rumorList.Count));
         }
 
@@ -182,6 +194,9 @@ namespace IDPParser.Control
                     await NavigateToPlayerPage(rumor.Player);
                     AppendLog(string.Format("Rumor: {0}, {1} page(s) ---- {2}", rumor.Id, i - 1, counter++));
                 }
+                _progressPb.Increment(1);
+                _counterLb.Text = counter.ToString();
+                AppendLog("-----------------------------");
             }
         }
 
