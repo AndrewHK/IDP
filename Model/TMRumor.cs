@@ -5,7 +5,9 @@
  * 
 */
 
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IDPParser.Model
 {
@@ -21,8 +23,8 @@ namespace IDPParser.Model
             Id = copyRumor.Id;
             Title = copyRumor.Title;
             Url = copyRumor.Url;
-            NoOfPages = copyRumor.NoOfPages;
             Player = copyRumor.Player;
+            IsSuccessful = copyRumor.IsSuccessful;
             Type = copyRumor.Type;
             _sourcesList = new List<TMRumorSource>();
         }
@@ -34,7 +36,7 @@ namespace IDPParser.Model
             Url = url;
             NoOfPages = noOfPages;
             Player = new TMPlayer();
-            Type = TMRumorType.Rumor;
+            IsSuccessful = false;
             _sourcesList = new List<TMRumorSource>();
         }
 
@@ -43,7 +45,9 @@ namespace IDPParser.Model
         public string Url { get; set; }
 
         public TMPlayer Player { get; set; }
-        public TMRumorType Type { get; set; }
+        public bool IsSuccessful { get; set; }
+
+        public string Type { get; set; }
 
         public int NoOfPages { get; set; }
         public int NoOfSources { get; set; }
@@ -60,6 +64,16 @@ namespace IDPParser.Model
         {
             _sourcesList.Add(source);
             NoOfSources++;
+        }
+
+        public bool RemoveSource(TMRumorSource source)
+        {
+            if (_sourcesList.Remove(source))
+            {
+                NoOfSources--;
+                return true;
+            }
+            return false;
         }
     }
 }

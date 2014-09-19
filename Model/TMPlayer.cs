@@ -34,6 +34,7 @@ namespace IDPParser.Model
             StrongerFoot = strongerFoot;
 
             _transferDictionary = new SortedDictionary<DateTime, TMClub>();
+            _loanDictionary = new SortedDictionary<DateTime, TMClub>();
         }
 
         public string Id { get; set; }
@@ -46,6 +47,7 @@ namespace IDPParser.Model
         public string StrongerFoot { get; set; }
 
         private readonly IDictionary<DateTime, TMClub> _transferDictionary;
+        private readonly IDictionary<DateTime, TMClub> _loanDictionary;
 
         private const string DateFormat = "dd.MM.yyyy";
 
@@ -53,11 +55,21 @@ namespace IDPParser.Model
         {
             return _transferDictionary;
         }
+        public IDictionary<DateTime, TMClub> GetLoanDictionary()
+        {
+            return _loanDictionary;
+        }
 
         public void AddTransfer(String dateStr, TMClub club)
         {
             var date = DateTime.ParseExact(dateStr, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
             _transferDictionary.Add(date,club);
+        }
+
+        public void AddLoan(String dateStr, TMClub club)
+        {
+            var date = DateTime.ParseExact(dateStr, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+            _loanDictionary.Add(date, club);
         }
     }
 }

@@ -101,6 +101,7 @@ namespace IDPParser.View
             // 
             this.rumorMillTB.Name = "rumorMillTB";
             this.rumorMillTB.Size = new System.Drawing.Size(730, 25);
+            this.rumorMillTB.Text = "http://www.transfermarkt.de/rumour-mill/detail/forum/500/";
             // 
             // toolStripSeparator1
             // 

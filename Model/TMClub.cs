@@ -30,6 +30,7 @@ namespace IDPParser.Model
 
         public bool ContainsName(string text)
         {
+            if (text.Length < 2) return false;
             var textToLower = text.ToLower();
             return textToLower.Contains(Name.ToLower()) || (ShortName != null && textToLower.Contains(ShortName.ToLower()));
         }

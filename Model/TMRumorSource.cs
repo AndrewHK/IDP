@@ -67,22 +67,29 @@ namespace IDPParser.Model
         public string Url { get; set; }
         public string Text { get; set; }
 
+        
 
         private DateTime _date;
         private TMClub _currentClub;
         private TMClub _interestedClub;
         private TMPlayer _player;
         private const string DateFormat = "dd.MM.yyyy - HH:mm";
+        private string _type;
 
         public void SetPlayer(TMPlayer player)
         {
             _player = player;
         }
 
+        public String GetRumorType()
+        {
+            return _type;
+        }
+
         public bool IsRumorSuccessful()
         {
             var playerTransfers = _player.GetTransferDictionary();
-
+            var playerLoans = _player.GetLoanDictionary();
             try
             {
                 var currClubKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(CurrentClubId));
@@ -91,10 +98,20 @@ namespace IDPParser.Model
                 if (_date.Date.CompareTo(currClubKvp.Key.Date) > 0 &&
                     _date.Date.CompareTo(interestedClubKvp.Key.Date) <= 0)
                 {
+                    _type = "Transfer";
+                    return true;
+                }
+
+                interestedClubKvp = playerLoans.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId));
+
+                if (_date.Date.CompareTo(currClubKvp.Key.Date) > 0 &&
+                    _date.Date.CompareTo(interestedClubKvp.Key.Date) <= 0)
+                {
+                    _type = "Loan";
                     return true;
                 }
             }
-            catch (Exception)
+            catch
             {
                 
             }
@@ -108,7 +125,6 @@ namespace IDPParser.Model
 
         public void DetermineCurrentClub()
         {
-            //var keysCollection = Player.TransferDictionary.Keys;
 
             var playerTransfers = _player.GetTransferDictionary();
             /* Loop on the SORTED dictionary till it finds a date that is after the given rumor source date,

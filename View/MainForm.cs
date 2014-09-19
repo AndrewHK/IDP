@@ -40,11 +40,16 @@ namespace IDPParser.View
             //_tmParser.ParsePlayer(pu);
 
             const string filename = "../../Data/clubList.xml";
+            var url = new Uri(rumorMillTB.Text);
+            
             /*
             Utils.RetrieveClubs(filename);
             */
             //var limitedList = new List<string> { "1007217", "1007227", "1007210", "1007215" };
-            _tmParser.ParseForum();
+
+            //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
+            //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
+            _tmParser.ParseForum(url);
             var task = _tmParser.NavigateToRumorPages();
             task.ContinueWith(t =>
             {
