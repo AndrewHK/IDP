@@ -136,20 +136,25 @@ namespace IDPParser.Model
             if (playerTransfers.Count <= 0) return;
             var prevKey = DateTime.MinValue;
             var prevprevKey = DateTime.MinValue;
-
-            foreach (var kvp in playerTransfers)
+            try
             {
-                if (kvp.Key.Date.CompareTo(_date.Date) >= 0)
+                foreach (var kvp in playerTransfers)
                 {
-                    var daysDiff = (_date - prevKey).TotalDays;
+                    if (kvp.Key.Date.CompareTo(_date.Date) >= 0)
+                    {
+                        var daysDiff = (_date - prevKey).TotalDays;
 
-                    _currentClub = daysDiff >= 10 ? playerTransfers[prevKey] : playerTransfers[prevprevKey];
-                    return;
+                        _currentClub = daysDiff >= 10 ? playerTransfers[prevKey] : playerTransfers[prevprevKey];
+                        return;
+                    }
+                    prevprevKey = prevKey;
+                    prevKey = kvp.Key;
                 }
-                prevprevKey = prevKey;
-                prevKey = kvp.Key;
+                _currentClub = playerTransfers[prevKey];
             }
-            _currentClub = playerTransfers[prevKey];
+            catch
+            {
+            }
         }
     }
 }

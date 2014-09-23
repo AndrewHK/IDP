@@ -99,7 +99,7 @@ namespace IDPParser.Control
         }
 
 
-        public void ParseForum(Uri uri, List<string> limitedList = null, int startIndex = 1, int endIndex = 10)
+        public void ParseForum(Uri uri, int startIndex = 1, int endIndex = -1, List<string> limitedList = null)
         {
             RumorMillUrl = uri.AbsoluteUri;
             DomainUrl = uri.Host;
@@ -121,6 +121,11 @@ namespace IDPParser.Control
             AppendLog(string.Format("{0} forum pages were found", ForumPages));
 
             AppendLog(string.Format("Getting forum entries .."));
+
+            if (endIndex == -1)
+            {
+                endIndex = ForumPages;
+            }
 
             for (var i = startIndex; i <= endIndex; i++)
             {
@@ -363,7 +368,8 @@ namespace IDPParser.Control
             var xpath = "//div[" + Utils.GenerateClassSelectorString("eight columns") + "]/div/div[" +
                         Utils.GenerateClassSelectorString("responsive-table") + "]/table/tbody/tr";
             Exception errorDetected = null;
-            try
+            HtmlNode lastRowNode = null;
+        try
             {
                 foreach (
                     var transferNodeRow in
@@ -393,11 +399,33 @@ namespace IDPParser.Control
                             _rumorList[ri].Player.AddLoan(date, currentClub);
                         }
                         errorDetected = null;
+                        lastRowNode = transferNodeRow;
                     }
                     catch (Exception e)
                     {
                         errorDetected = e;
                     }
+                }
+                try
+                {
+                    if (lastRowNode != null)
+                    {
+                        var minDate = DateTime.MinValue.ToString("dd.MM.yyyy");
+                        var firstClubName = lastRowNode.ChildNodes[9].InnerText.Trim();
+                        var firstClubUrl = lastRowNode.ChildNodes[9].ChildNodes[1].Attributes["href"].Value;
+
+                        var begin = firstClubUrl.LastIndexOf("verein/", StringComparison.Ordinal) + 7;
+                        var end = firstClubUrl.LastIndexOf("/saison", StringComparison.Ordinal);
+                        var firstClubId = firstClubUrl.Substring(begin, end - begin);
+
+                        var firstClub = new TMClub(firstClubId, firstClubName);
+
+                        _rumorList[ri].Player.AddTransfer(minDate, firstClub);
+                    }
+                }
+                catch (Exception e)
+                {
+                    errorDetected = e;
                 }
             }
             catch (Exception e)

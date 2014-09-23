@@ -99,9 +99,13 @@ namespace IDPParser.View
             // 
             // rumorMillTB
             // 
+            this.rumorMillTB.AutoCompleteCustomSource.AddRange(new string[] {
+            "http://www.transfermarkt.de/geruchtekuche/detail/forum/154/",
+            "http://www.transfermarkt.de/rumour-mill/detail/forum/500/"});
+            this.rumorMillTB.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.rumorMillTB.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.rumorMillTB.Name = "rumorMillTB";
             this.rumorMillTB.Size = new System.Drawing.Size(730, 25);
-            this.rumorMillTB.Text = "http://www.transfermarkt.de/rumour-mill/detail/forum/500/";
             // 
             // toolStripSeparator1
             // 

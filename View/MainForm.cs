@@ -34,7 +34,7 @@ namespace IDPParser.View
             //
         }
         
-        private void CrawlBtn_Click(object sender, EventArgs e)
+        private async void CrawlBtn_Click(object sender, EventArgs e)
         {
             //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
             //_tmParser.ParsePlayer(pu);
@@ -49,32 +49,29 @@ namespace IDPParser.View
 
             //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
             //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
-            _tmParser.ParseForum(url);
-            var task = _tmParser.NavigateToRumorPages();
-            task.ContinueWith(t =>
-            {
-                MessageBox.Show("Navigation done!");
-                navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            _tmParser.ParseForum(url, 1, 10, null);
+            await _tmParser.NavigateToRumorPages();
 
-                _tmParser.UpdateRumorsSources();
-                MessageBox.Show("Rumor Sources updated!");
-                rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            MessageBox.Show("Navigation done!");
+            navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+
+            _tmParser.UpdateRumorsSources();
+            MessageBox.Show("Rumor Sources updated!");
+            rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
 
-                _tmParser.UpdateInterestedClubs(filename);
-                MessageBox.Show("Interested Clubs retrieved!");
-                interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            _tmParser.UpdateInterestedClubs(filename);
+            MessageBox.Show("Interested Clubs retrieved!");
+            interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
-                _tmParser.DetermineRumorType();
-                MessageBox.Show("Rumor Types determined!");
-                rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            _tmParser.DetermineRumorType();
+            MessageBox.Show("Rumor Types determined!");
+            rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
-                CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                    _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
-                MessageBox.Show("Excel sheet created!");
-                excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
-
-            }, TaskScheduler.FromCurrentSynchronizationContext());
+            CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
+                _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
+            MessageBox.Show("Excel sheet created!");
+            excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
         }
     }
 }
