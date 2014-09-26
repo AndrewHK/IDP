@@ -36,22 +36,20 @@ namespace IDPParser.View
         
         private async void CrawlBtn_Click(object sender, EventArgs e)
         {
-            //string pu = "http://www.transfermarkt.de/shinji-kagawa/profil/spieler/81785";
-            //_tmParser.ParsePlayer(pu);
-
+            
             const string filename = "../../Data/clubList.xml";
             var url = new Uri(rumorMillTB.Text);
             
             /*
             Utils.RetrieveClubs(filename);
             */
-            //var limitedList = new List<string> { "1007217", "1007227", "1007210", "1007215" };
+            var limitedList = new List<string> { "972770"};
 
             //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
             //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
             _tmParser.ParseForum(url, 1, 10, null);
             await _tmParser.NavigateToRumorPages();
-
+            
             MessageBox.Show("Navigation done!");
             navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
@@ -69,9 +67,10 @@ namespace IDPParser.View
             rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
             CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                _tmParser.GetRumorsSourcesList(), "Sample_Complete.xlsx");
+                _tmParser.GetRumorsSourcesList(), "Sample_Complete2.xlsx");
             MessageBox.Show("Excel sheet created!");
             excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            
         }
     }
 }

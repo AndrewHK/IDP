@@ -338,7 +338,7 @@ namespace IDPParser.Control
                     playerDetailsNode.ChildNodes[15].LastChild.PreviousSibling.SelectSingleNode("a").Attributes["href"]
                         .Value;
                 var currentClubId = currentClubUrl.Substring(currentClubUrl.LastIndexOf('/') + 1);
-                //_rumorList[ri].CurrentClub = new TMClub(currentClubId, currentClubName);
+                _rumorList[ri].setCurrentClub(currentClubId, currentClubName);
                 _rumorList[ri].IsParsed = true;
 
                 // Check if there is a fixed source
@@ -394,7 +394,7 @@ namespace IDPParser.Control
                         {
                             _rumorList[ri].Player.AddTransfer(date, currentClub);
                         }
-                        else
+                        else if(leihe.Trim().Equals("ist"))
                         {
                             _rumorList[ri].Player.AddLoan(date, currentClub);
                         }
@@ -448,7 +448,7 @@ namespace IDPParser.Control
                 var player = _rumorList[ri].Player;
 
                 rumorSource.SetPlayer(player);
-                rumorSource.DetermineCurrentClub();
+                rumorSource.DetermineCurrentClub(_rumorList[ri].getCurrentClub());
             }
             foreach (var rumor in _rumorList)
             {

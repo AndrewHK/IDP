@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.NetworkInformation;
 
 namespace IDPParser.Model
 {
@@ -22,7 +23,7 @@ namespace IDPParser.Model
         public TMRumorSource(string rumorId, string date, string name, string url, string text)
         {
             RumorId = rumorId;
-            _date = DateTime.ParseExact(date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
+            _rumorSourceDate = DateTime.ParseExact(date, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None);
             
             Name = name;
             Url = url;
@@ -60,7 +61,7 @@ namespace IDPParser.Model
         {
             get
             {
-                return _date.ToShortDateString();
+                return _rumorSourceDate.ToShortDateString();
             }
         }
         public string Name { get; set; }
@@ -69,12 +70,15 @@ namespace IDPParser.Model
 
         
 
-        private DateTime _date;
+        private DateTime _rumorSourceDate;
+        private DateTime _currentClubDate;
         private TMClub _currentClub;
         private TMClub _interestedClub;
         private TMPlayer _player;
         private const string DateFormat = "dd.MM.yyyy - HH:mm";
         private string _type;
+        private bool isSuccessful;
+        
 
         public void SetPlayer(TMPlayer player)
         {
@@ -92,24 +96,22 @@ namespace IDPParser.Model
             var playerLoans = _player.GetLoanDictionary();
             try
             {
-                var currClubKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(CurrentClubId));
-                var interestedClubKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId));
+                var interestedClubTransfersKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) > 0);
 
-                if (_date.Date.CompareTo(currClubKvp.Key.Date) > 0 &&
-                    _date.Date.CompareTo(interestedClubKvp.Key.Date) <= 0)
+                if (interestedClubTransfersKvp.Value != null && !playerTransfers.Any(x => x.Key.Date.CompareTo(_currentClubDate.Date) > 0 && x.Key.Date.CompareTo(interestedClubTransfersKvp.Key.Date) < 0))
                 {
                     _type = "Transfer";
                     return true;
                 }
 
-                interestedClubKvp = playerLoans.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId));
+                var interestedClubLoansKvp = playerLoans.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) > 0);
 
-                if (_date.Date.CompareTo(currClubKvp.Key.Date) > 0 &&
-                    _date.Date.CompareTo(interestedClubKvp.Key.Date) <= 0)
+                if (interestedClubLoansKvp.Value != null && !playerTransfers.Any(x => x.Key.Date.CompareTo(_currentClubDate.Date) > 0 && x.Key.Date.CompareTo(interestedClubLoansKvp.Key.Date) < 0))
                 {
                     _type = "Loan";
                     return true;
                 }
+
             }
             catch
             {
@@ -118,39 +120,57 @@ namespace IDPParser.Model
             return false;
 
         }
+
         public void SetInterestedClub(TMClub club)
         {
             _interestedClub = club;
         }
 
-        public void DetermineCurrentClub()
+        public void DetermineCurrentClub(TMClub defaultClub)
         {
 
             var playerTransfers = _player.GetTransferDictionary();
+            const int minDayDiff = 10;
             /* Loop on the SORTED dictionary till it finds a date that is after the given rumor source date,
              * if no transfers (like in /emmanual-sunday/profil/spieler/156476) return
              * Get the club related to the date BEFORE the one it found
              * If nothing before, current club is null
              * If nothing after, current club is last club
             */
-            if (playerTransfers.Count <= 0) return;
+            if (playerTransfers.Count <= 0)
+            {
+                _currentClub = defaultClub;
+                return;
+            }
             var prevKey = DateTime.MinValue;
             var prevprevKey = DateTime.MinValue;
             try
             {
                 foreach (var kvp in playerTransfers)
                 {
-                    if (kvp.Key.Date.CompareTo(_date.Date) >= 0)
+                    if (kvp.Key.Date.CompareTo(_rumorSourceDate.Date) >= 0)
                     {
-                        var daysDiff = (_date - prevKey).TotalDays;
+                        var daysDiff = (_rumorSourceDate - prevKey).TotalDays;
 
-                        _currentClub = daysDiff >= 10 ? playerTransfers[prevKey] : playerTransfers[prevprevKey];
+                        if (daysDiff >= minDayDiff)
+                        {
+                            _currentClub = playerTransfers[prevKey];
+                            _currentClubDate = prevKey;
+                        }
+                        else
+                        {
+                            _currentClub = playerTransfers[prevprevKey];
+                            _currentClubDate = prevprevKey;
+                        }
+                         
+                        
                         return;
                     }
                     prevprevKey = prevKey;
                     prevKey = kvp.Key;
                 }
                 _currentClub = playerTransfers[prevKey];
+                _currentClubDate = prevKey;
             }
             catch
             {

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+﻿<?xml version="1.0"?>
 <ArrayOfTMClub xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <TMClub>
     <Id>1</Id>
@@ -156,7 +156,7 @@
   <TMClub>
     <Id>33</Id>
     <Name>FC Schalke 04</Name>
-    <ShortName>FC Schalke 04</ShortName>
+    <ShortName>Schalke 04</ShortName>
   </TMClub>
   <TMClub>
     <Id>34</Id>
@@ -185,7 +185,7 @@
   <TMClub>
     <Id>39</Id>
     <Name>1.FSV Mainz 05</Name>
-    <ShortName>1.FSV Mainz 05</ShortName>
+    <ShortName>Mainz 05</ShortName>
   </TMClub>
   <TMClub>
     <Id>40</Id>

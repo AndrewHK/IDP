@@ -17,6 +17,7 @@ namespace IDPParser.Model
     public class TMRumor
     {
         private readonly IList<TMRumorSource> _sourcesList;
+        private TMClub _currentClub;
 
         public TMRumor(TMRumor copyRumor)
         {
@@ -45,6 +46,7 @@ namespace IDPParser.Model
         public string Url { get; set; }
 
         public TMPlayer Player { get; set; }
+        
         public bool IsSuccessful { get; set; }
 
         public string Type { get; set; }
@@ -74,6 +76,16 @@ namespace IDPParser.Model
                 return true;
             }
             return false;
+        }
+
+        public void setCurrentClub(string id, string name)
+        {
+            _currentClub = new TMClub(id,name);
+        }
+
+        public TMClub getCurrentClub()
+        {
+            return _currentClub;
         }
     }
 }
