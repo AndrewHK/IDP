@@ -77,7 +77,6 @@ namespace IDPParser.Model
         private TMPlayer _player;
         private const string DateFormat = "dd.MM.yyyy - HH:mm";
         private string _type;
-        private bool isSuccessful;
         
 
         public void SetPlayer(TMPlayer player)
@@ -96,7 +95,7 @@ namespace IDPParser.Model
             var playerLoans = _player.GetLoanDictionary();
             try
             {
-                var interestedClubTransfersKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) > 0);
+                var interestedClubTransfersKvp = playerTransfers.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) >= 0);
 
                 if (interestedClubTransfersKvp.Value != null && !playerTransfers.Any(x => x.Key.Date.CompareTo(_currentClubDate.Date) > 0 && x.Key.Date.CompareTo(interestedClubTransfersKvp.Key.Date) < 0))
                 {
@@ -104,7 +103,7 @@ namespace IDPParser.Model
                     return true;
                 }
 
-                var interestedClubLoansKvp = playerLoans.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) > 0);
+                var interestedClubLoansKvp = playerLoans.FirstOrDefault(x => x.Value.Id.Equals(InterestedClubId) && x.Key.Date.CompareTo(_rumorSourceDate.Date) >= 0);
 
                 if (interestedClubLoansKvp.Value != null && !playerTransfers.Any(x => x.Key.Date.CompareTo(_currentClubDate.Date) > 0 && x.Key.Date.CompareTo(interestedClubLoansKvp.Key.Date) < 0))
                 {

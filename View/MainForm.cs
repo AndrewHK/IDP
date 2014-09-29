@@ -37,7 +37,12 @@ namespace IDPParser.View
         private async void CrawlBtn_Click(object sender, EventArgs e)
         {
             
-            const string filename = "../../Data/clubList.xml";
+            const string clublistXml = "../../Data/clubList.xml";
+            const string outFilename = "RumorMill_German.xlsx";
+
+            const string backupRumorsFile = "rumorlist.xlsx";
+            const string backupRumorsSourcesFile = "rumorlistsources.xlsx";
+
             var url = new Uri(rumorMillTB.Text);
             
             /*
@@ -47,28 +52,33 @@ namespace IDPParser.View
 
             //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
             //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
-            _tmParser.ParseForum(url, 1, 10, null);
+
+            _tmParser.DetermineForumPageCount(url);
+            _tmParser.ParseForum();
             await _tmParser.NavigateToRumorPages();
             
-            MessageBox.Show("Navigation done!");
+            //MessageBox.Show("Navigation done!");
             navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
+            Utils.SerializeObject(_tmParser.GetRumorsList(), backupRumorsFile);
+            Utils.SerializeObject(_tmParser.GetRumorsSourcesList(), backupRumorsSourcesFile);
+
             _tmParser.UpdateRumorsSources();
-            MessageBox.Show("Rumor Sources updated!");
+            //MessageBox.Show("Rumor Sources updated!");
             rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
 
-            _tmParser.UpdateInterestedClubs(filename);
-            MessageBox.Show("Interested Clubs retrieved!");
+            _tmParser.UpdateInterestedClubs(clublistXml);
+            //MessageBox.Show("Interested Clubs retrieved!");
             interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
             _tmParser.DetermineRumorType();
-            MessageBox.Show("Rumor Types determined!");
+            //MessageBox.Show("Rumor Types determined!");
             rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
             CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                _tmParser.GetRumorsSourcesList(), "Sample_Complete2.xlsx");
-            MessageBox.Show("Excel sheet created!");
+                _tmParser.GetRumorsSourcesList(), outFilename);
+            //MessageBox.Show("Excel sheet created!");
             excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
             
         }

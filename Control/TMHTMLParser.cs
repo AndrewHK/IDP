@@ -61,7 +61,7 @@ namespace IDPParser.Control
 
         public string DomainUrl { get; set; }
         public string RumorMillUrl { get; set; }
-        public int ForumPages { get; set; }
+        public int ForumPagesCount { get; set; }
 
         private void SetWebBrowsers()
         {
@@ -98,8 +98,7 @@ namespace IDPParser.Control
             return _rumorSourcesList;
         }
 
-
-        public void ParseForum(Uri uri, int startIndex = 1, int endIndex = -1, List<string> limitedList = null)
+        public void DetermineForumPageCount(Uri uri)
         {
             RumorMillUrl = uri.AbsoluteUri;
             DomainUrl = uri.Host;
@@ -116,22 +115,27 @@ namespace IDPParser.Control
                 htmlDoc.DocumentNode.SelectSingleNode("//li[" + Utils.GenerateClassSelectorString("letzte-seite") + "]/a");
             var lastPageNodeUrl = lastPageNode.Attributes["href"].Value;
             var lastPage = lastPageNodeUrl.Substring(lastPageNodeUrl.LastIndexOf('/') + 1);
-            ForumPages = Int16.Parse(lastPage);
+            ForumPagesCount = Int16.Parse(lastPage);
 
-            AppendLog(string.Format("{0} forum pages were found", ForumPages));
+            AppendLog(string.Format("{0} forum pages were found", ForumPagesCount));
+        }
+        public void ParseForum(int startIndex = 1, int endIndex = -1, List<string> limitedList = null)
+        {
 
             AppendLog(string.Format("Getting forum entries .."));
 
             if (endIndex == -1)
             {
-                endIndex = ForumPages;
+                endIndex = ForumPagesCount;
             }
+            AppendLog(string.Format("{0} entries will be parsed", endIndex));
 
             for (var i = startIndex; i <= endIndex; i++)
             {
                 var link = string.Format("{0}page/{1}", RumorMillUrl, i);
 
-                htmlData = Utils.GetHtmlFromUrl(link);
+                var htmlData = Utils.GetHtmlFromUrl(link);
+                var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlData);
 
                 if (htmlDoc.DocumentNode == null) return;
@@ -160,6 +164,7 @@ namespace IDPParser.Control
             }
             _progressPb.Maximum = _rumorList.Count;
             _maxLb.Text = _rumorList.Count.ToString();
+
             AppendLog(string.Format("{0} forum entries were found", _rumorList.Count));
         }
 
