@@ -36,50 +36,63 @@ namespace IDPParser.View
         
         private async void CrawlBtn_Click(object sender, EventArgs e)
         {
-            
-            const string clublistXml = "../../Data/clubList.xml";
-            const string outFilename = "RumorMill_German.xlsx";
+
+            const string clublistXml = "clubList.xml";
 
             const string backupRumorsFile = "rumorlist.xlsx";
             const string backupRumorsSourcesFile = "rumorlistsources.xlsx";
 
             var url = new Uri(rumorMillTB.Text);
-            
+
             /*
             Utils.RetrieveClubs(filename);
             */
-            var limitedList = new List<string> { "972770"};
+            var limitedList = new List<string> { "972770" };
 
             //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
             //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
 
             _tmParser.DetermineForumPageCount(url);
-            _tmParser.ParseForum();
-            await _tmParser.NavigateToRumorPages();
-            
-            //MessageBox.Show("Navigation done!");
-            navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+            for (var i = 201; i < 401; i += 100)
+            {
+                string outFilename = string.Format("RumorMill_International({0}-{1}).xlsx",i, i+99);
 
-            Utils.SerializeObject(_tmParser.GetRumorsList(), backupRumorsFile);
-            Utils.SerializeObject(_tmParser.GetRumorsSourcesList(), backupRumorsSourcesFile);
+                try
+                {
+                    _tmParser.ParseForum(i, i + 99);
+                    await _tmParser.NavigateToRumorPages();
 
-            _tmParser.UpdateRumorsSources();
-            //MessageBox.Show("Rumor Sources updated!");
-            rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+                    //MessageBox.Show("Navigation done!");
+                    //navGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+
+                    //Utils.SerializeObject(_tmParser.GetRumorsList(), backupRumorsFile);
+                    //Utils.SerializeObject(_tmParser.GetRumorsSourcesList(), backupRumorsSourcesFile);
+
+                    _tmParser.UpdateRumorsSources();
+                    //MessageBox.Show("Rumor Sources updated!");
+                    //rumorSrcGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
 
-            _tmParser.UpdateInterestedClubs(clublistXml);
-            //MessageBox.Show("Interested Clubs retrieved!");
-            interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+                    _tmParser.UpdateInterestedClubs(clublistXml);
+                    //MessageBox.Show("Interested Clubs retrieved!");
+                    //interClubGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
-            _tmParser.DetermineRumorType();
-            //MessageBox.Show("Rumor Types determined!");
-            rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+                    _tmParser.DetermineRumorType();
+                    //MessageBox.Show("Rumor Types determined!");
+                    //rumorTypeGB.BackColor = System.Drawing.Color.MediumSeaGreen;
 
-            CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
-                _tmParser.GetRumorsSourcesList(), outFilename);
-            //MessageBox.Show("Excel sheet created!");
-            excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+                    CreateExcelFile.CreateRumorsCompleteExcelDocument(_tmParser.GetRumorsList(),
+                        _tmParser.GetRumorsSourcesList(), outFilename);
+                    //MessageBox.Show("Excel sheet created!");
+                    //excelSheetGB.BackColor = System.Drawing.Color.MediumSeaGreen;
+                }
+                catch
+                {
+                    
+                }
+                _tmParser.Refresh();
+            }
+           
             
         }
     }

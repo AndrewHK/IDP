@@ -28,8 +28,8 @@ namespace IDPParser.Control
     public class TMHTMLParser
     {
 
-        private readonly List<TMRumor> _rumorList;
-        private readonly List<TMRumorSource> _rumorSourcesList;
+        private List<TMRumor> _rumorList;
+        private List<TMRumorSource> _rumorSourcesList;
 
         private string _currRumorId;
 
@@ -121,14 +121,13 @@ namespace IDPParser.Control
         }
         public void ParseForum(int startIndex = 1, int endIndex = -1, List<string> limitedList = null)
         {
-
-            AppendLog(string.Format("Getting forum entries .."));
-
             if (endIndex == -1)
             {
                 endIndex = ForumPagesCount;
             }
-            AppendLog(string.Format("{0} entries will be parsed", endIndex));
+            AppendLog(string.Format("{0} forum pages are going to be parsed", endIndex));
+
+            AppendLog(string.Format("Getting forum entries .."));
 
             for (var i = startIndex; i <= endIndex; i++)
             {
@@ -527,6 +526,13 @@ namespace IDPParser.Control
                 rumor.Type = currRumorSources.First().GetRumorType();
                 AppendLog(string.Format("Rumor ({0}) : Successful ({1}) : Type ({2})", rumor.Title, rumor.IsSuccessful, rumor.Type));
             }
+        }
+
+        public void Refresh()
+        {
+            _rumorList = new List<TMRumor>();
+            _rumorSourcesList = new List<TMRumorSource>();
+            SetWebBrowsers();
         }
     }
 }
