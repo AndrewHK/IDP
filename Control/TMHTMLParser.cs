@@ -448,42 +448,56 @@ namespace IDPParser.Control
             var splitRumorList = new List<TMRumor>();
             foreach (var rumorSource in _rumorSourcesList)
             {
-                var ri = GetRumorIndex(rumorSource.RumorId);
-                var player = _rumorList[ri].Player;
+                try
+                {
+                    var ri = GetRumorIndex(rumorSource.RumorId);
+                    var player = _rumorList[ri].Player;
 
-                rumorSource.SetPlayer(player);
-                rumorSource.DetermineCurrentClub(_rumorList[ri].getCurrentClub());
+                    rumorSource.SetPlayer(player);
+                    rumorSource.DetermineCurrentClub(_rumorList[ri].getCurrentClub());
+                }
+                catch
+                {
+
+                }
             }
             foreach (var rumor in _rumorList)
             {
-                var rumorSources = rumor.GetSources();
-                if(rumorSources == null || rumorSources.Count == 0) continue;
-
-                var rumorCurrentClubId = rumorSources[0].CurrentClubId;
-                var detectedCurrentClubsIdList = new List<string>();
-
-                var postfix = (char)64;
-                foreach (
-                    var rumorSource in
-                        rumorSources.Where(
-                            rumorSource =>
-                                (!string.IsNullOrEmpty(rumorSource.CurrentClubId)) &&
-                                (!rumorCurrentClubId.Equals(rumorSource.CurrentClubId))))
+                try
                 {
-                    if (detectedCurrentClubsIdList.IndexOf(rumorSource.CurrentClubId) < 0)
+                    var rumorSources = rumor.GetSources();
+                    if (rumorSources == null || rumorSources.Count == 0) continue;
+
+                    var rumorCurrentClubId = rumorSources[0].CurrentClubId;
+                    var detectedCurrentClubsIdList = new List<string>();
+
+                    var postfix = (char)64;
+                    foreach (
+                        var rumorSource in
+                            rumorSources.Where(
+                                rumorSource =>
+                                    (!string.IsNullOrEmpty(rumorSource.CurrentClubId)) &&
+                                    (!rumorCurrentClubId.Equals(rumorSource.CurrentClubId))))
                     {
-                        detectedCurrentClubsIdList.Add(rumorSource.CurrentClubId);
-                        postfix++;
+                        if (detectedCurrentClubsIdList.IndexOf(rumorSource.CurrentClubId) < 0)
+                        {
+                            detectedCurrentClubsIdList.Add(rumorSource.CurrentClubId);
+                            postfix++;
 
-                        var newSplitRumor = new TMRumor(rumor) { Id = rumorSource.RumorId + postfix };
-                        splitRumorList.Add(newSplitRumor);
+                            var newSplitRumor = new TMRumor(rumor) { Id = rumorSource.RumorId + postfix };
+                            splitRumorList.Add(newSplitRumor);
+                        }
+                        rumorSource.SplitRumor = rumorSource.RumorId + postfix;
+                        splitRumorList.First(x => x.Id.Equals(rumorSource.SplitRumor)).AddSource(rumorSource);
                     }
-                    rumorSource.SplitRumor = rumorSource.RumorId + postfix;
-                    splitRumorList.First(x => x.Id.Equals(rumorSource.SplitRumor)).AddSource(rumorSource);
+                    foreach (var splittedRumorSource in splitRumorList.SelectMany(splittedRumor => splittedRumor.GetSources()))
+                    {
+                        rumor.RemoveSource(splittedRumorSource);
+                    }
                 }
-                foreach (var splittedRumorSource in splitRumorList.SelectMany(splittedRumor => splittedRumor.GetSources()))
+                catch
                 {
-                    rumor.RemoveSource(splittedRumorSource);
+                    
                 }
 
             }
@@ -499,17 +513,24 @@ namespace IDPParser.Control
 
             foreach (var rumor in _rumorList)
             {
-                var rumorTitle = rumor.Title;
-                var interestedClub = clubList.FirstOrDefault(c => c.ContainsName(rumorTitle));
-
-                var currRumorSources = rumor.GetSources();
-                if (currRumorSources == null || currRumorSources.Count == 0) continue;
-
-                foreach (var rumorSource in currRumorSources)
+                try
                 {
-                    rumorSource.SetInterestedClub(interestedClub);
+                    var rumorTitle = rumor.Title;
+                    var interestedClub = clubList.FirstOrDefault(c => c.ContainsName(rumorTitle));
+
+                    var currRumorSources = rumor.GetSources();
+                    if (currRumorSources == null || currRumorSources.Count == 0) continue;
+
+                    foreach (var rumorSource in currRumorSources)
+                    {
+                        rumorSource.SetInterestedClub(interestedClub);
+                    }
+                    AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, interestedClub == null ? string.Empty : interestedClub.Name));
                 }
-                AppendLog(string.Format("Rumor ({0}) : Club ({1})", rumor.Title, interestedClub == null ? string.Empty : interestedClub.Name));
+                catch
+                {
+                    
+                }
             }
         }
 
@@ -519,12 +540,19 @@ namespace IDPParser.Control
 
             foreach (var rumor in _rumorList)
             {
-                var currRumorSources = rumor.GetSources();
-                if (currRumorSources == null || currRumorSources.Count == 0) continue;
+                try
+                {
+                    var currRumorSources = rumor.GetSources();
+                    if (currRumorSources == null || currRumorSources.Count == 0) continue;
 
-                rumor.IsSuccessful = currRumorSources.First().IsRumorSuccessful();
-                rumor.Type = currRumorSources.First().GetRumorType();
-                AppendLog(string.Format("Rumor ({0}) : Successful ({1}) : Type ({2})", rumor.Title, rumor.IsSuccessful, rumor.Type));
+                    rumor.IsSuccessful = currRumorSources.First().IsRumorSuccessful();
+                    rumor.Type = currRumorSources.First().GetRumorType();
+                    AppendLog(string.Format("Rumor ({0}) : Successful ({1}) : Type ({2})", rumor.Title, rumor.IsSuccessful, rumor.Type));
+                }
+                catch
+                {
+
+                }
             }
         }
 

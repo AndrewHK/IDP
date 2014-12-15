@@ -52,14 +52,16 @@ namespace IDPParser.View
             //http://www.transfermarkt.de/geruchtekuche/detail/forum/154/
             //http://www.transfermarkt.de/rumour-mill/detail/forum/500/
 
+            const int jumpCount = 50;
+
             _tmParser.DetermineForumPageCount(url);
-            for (var i = 201; i < 401; i += 100)
+            for (var i = 51; i < 401; i += jumpCount)
             {
-                string outFilename = string.Format("RumorMill_International({0}-{1}).xlsx",i, i+99);
+                string outFilename = string.Format("RumorMill_German({0}-{1}).xlsx", i, i + jumpCount-1);
 
                 try
                 {
-                    _tmParser.ParseForum(i, i + 99);
+                    _tmParser.ParseForum(i, i + jumpCount-1);
                     await _tmParser.NavigateToRumorPages();
 
                     //MessageBox.Show("Navigation done!");
